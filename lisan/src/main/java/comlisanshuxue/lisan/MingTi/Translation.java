@@ -1,8 +1,5 @@
 package comlisanshuxue.lisan.MingTi;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 
 public class Translation {
@@ -51,6 +48,9 @@ public class Translation {
 					op1[count1] = op2[count2];
 					count2--;
 				}
+				//为了让中间过程显示括号，需要把"("加入后缀表达式
+				count1++;
+				op1[count1] = op2[count2];
 				count2--;
 			}
 			else {
@@ -71,6 +71,7 @@ public class Translation {
 			op1[count1]=op2[count2];
 			count2--;
 		}//后缀表达式完成
+		System.out.println(op1);
 	}
 
 	void judge() {//存储变量
@@ -168,6 +169,10 @@ public class Translation {
 				fo.va_name.add(v[num-1]);
 				num--;
 				fo.num++;
+			}
+			else if(op1[i]=='(') {
+				//让中间过程显示括号
+				v[num]="("+v[num]+")";
 			}
 		}
 	}

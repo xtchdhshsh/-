@@ -8,7 +8,7 @@ public class DijkstraAlgorithm {
 
     private static final int INF = Integer.MAX_VALUE;
 
-    public static String[] dijkstra(int[][] graph, int source) {
+    public static String[] dijkstra(int[][] graph, int startNode) {
         int vertices = graph.length;
         int[] dist = new int[vertices]; // 存储从源点到每个顶点的最短距离
         boolean[] visited = new boolean[vertices]; // 记录顶点是否已被访问
@@ -18,7 +18,7 @@ public class DijkstraAlgorithm {
         // 初始化距离数组、访问数组、前驱数组和路径数组
         Arrays.fill(dist, INF);
         Arrays.fill(previous, -1);
-        dist[source] = 0;
+        dist[startNode] = 0;
         Arrays.fill(paths, "");
 
         for (int i = 0; i < vertices - 1; i++) {
@@ -36,11 +36,11 @@ public class DijkstraAlgorithm {
 
         // 生成路径结果
         for (int i = 0; i < vertices; i++) {
-            paths[i] = getPath(previous, i) + " (" + dist[i] + ")";
+            paths[i] = getPath(previous, i, startNode) + " (" + dist[i] + ")";
         }
 
         // 打印最短路径
-        printSolution(paths);
+        printSolution(paths, startNode);
         return paths;
     }
 
@@ -60,38 +60,31 @@ public class DijkstraAlgorithm {
     }
 
     // 获取从源点到目标顶点的路径
-    private static String getPath(int[] previous, int target) {
+    private static String getPath(int[] previous, int target, int startNode) {
         if (previous[target] == -1) {
             return (char) ('A' + target) + "";
         }
-        return getPath(previous, previous[target]) + " -> " + (char) ('A' + target);
+        return getPath(previous, previous[target], startNode) + " -> " + (char) ('A' + target);
     }
 
     // 打印最短路径结果
-    private static void printSolution(String[] paths) {
+    private static void printSolution(String[] paths, int startNode) {
         System.out.println("顶点\t路径");
         for (int i = 0; i < paths.length; i++) {
             System.out.println((char) ('A' + i) + "\t" + paths[i]);
         }
     }
 
-    public String[] FindLuJing(int[][] graph,int geshu) {
+    public String[] FindLuJing(int[][] graph,int geshu, int startNode) {
 
         String[] jieguo = new String[geshu-1];
         String[] jieshou = new String[geshu];
         String dange = "";
-//        int[][] graph = {
-//                {0, 10, -1, 4, -1, -1},
-//                {10, 0, 8, 2, 6, -1},
-//                {-1, 8, 0, -1, 1, 5},
-//                {4, 2, -1, 0, 6, -1},
-//                {-1, 6, 1, 6, 0, 12},
-//                {-1, -1, 5, -1, 12, 0}
-//        };
 
-        jieshou  = dijkstra(graph, 0);
+        jieshou  = dijkstra(graph, startNode);
         System.out.println("输出数组");
-       for (int i = 1;i<geshu;i++){
+       for (int i = 0;i<geshu;i++){
+           if (i == startNode) continue;
            dange = "";
            for(int j=0;j<jieshou[i].length();j++){
                if(jieshou[i].charAt(j)>='A' && jieshou[i].charAt(j)<='Z'){
@@ -100,7 +93,7 @@ public class DijkstraAlgorithm {
            }
            dange+=":";
            dange += StringUtils.substringBetween(jieshou[i],"(",")");
-           jieguo[i-1] = dange;
+           jieguo[i - (i > startNode ? 1 : 0)] = dange;
        }
         for (String s : jieguo) {
             System.out.println("结果的"+s);

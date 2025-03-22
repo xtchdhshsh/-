@@ -3,116 +3,141 @@ package comlisanshuxue.lisan.jihe;
 import comlisanshuxue.lisan.constants.jihechangliang;
 import comlisanshuxue.lisan.dto.jihedto;
 import io.swagger.annotations.Api;
-import io.swagger.models.auth.In;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import static comlisanshuxue.lisan.constants.jihechangliang.JIHEA;
-import static comlisanshuxue.lisan.constants.jihechangliang.JIHEB;
-
 
 @RestController
 @Api(tags = "集合")
 public class newjehe {
 
-
     @PostMapping("/jihe")
-    public Set<Integer> jiheyunsuan(@RequestBody jihedto j){
-         List<List<Integer>> lists = new ArrayList<>();
-         List<Integer> r = new ArrayList<>();
-        if(j.a!=null){
-            lists.add(j.a);
-            System.out.println("集合a为:"+j.a);
-        }
-        if(j.b!=null){
-            lists.add(j.b);
-            System.out.println("集合b为:"+j.b);
-        }
-        if(j.c!=null){
-            lists.add(j.c);
-            System.out.println("集合c为:"+j.c);
-        }
-        String shizi = j.getShizi();
-        if(shizi.charAt(0)=='a'){
-            r.addAll(lists.get(jihechangliang.JIHEA));
-        }else if(shizi.charAt(0)=='b'){
-            r.addAll(lists.get(JIHEB));
-        }else if(shizi.charAt(0)=='c'){
-            r.addAll(lists.get(jihechangliang.JIHEC));
-        }
-        System.out.println(r);
+    public Set<Integer> jiheyunsuan(@RequestBody jihedto j) {
+        List<List<Integer>> lists = new ArrayList<>();
+        lists.add(j.getA());
+        lists.add(j.getB());
+        lists.add(j.getC());
+        lists.add(j.getD());
 
+        String shizi = j.getShizi().replaceAll("\\s+", "");
 
+        List<Integer> result;
+        try {
+            result = parseExpression(shizi, lists);
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("表达式解析错误: " + e.getMessage());
+        }
 
+        return new HashSet<>(result);
+    }
 
-        for(int i=0;i<shizi.length();i++){
-            if(shizi.charAt(i)=='∪'){
-                List<Integer> yunsuanjihe = getJihe(lists, shizi.charAt((i + 1)));
-                r = getBingji(r, yunsuanjihe);
-            }else if(shizi.charAt(i)=='∩'){
-                List<Integer> yunsuanjihe = getJihe(lists, shizi.charAt((i + 1)));
-                r = getJiaoji(r, yunsuanjihe);
-            }else if(shizi.charAt(i)=='△'){
-                List<Integer> yunsuanjihe = getJihe(lists, shizi.charAt((i + 1)));
-                r = getbuji(r, yunsuanjihe);
-            }else if(shizi.charAt(i)=='-'){
-                List<Integer> yunsuanjihe = getJihe(lists, shizi.charAt((i + 1)));
-                r = getchaji(r, yunsuanjihe);
+    private List<Integer> parseExpression(String expr, List<List<Integer>> lists) {
+        int[] index = new int[]{0};
+        return parseExpressionHelper(expr, lists, index);
+    }
+
+    private List<Integer> parseExpressionHelper(String expr, List<List<Integer>> lists, int[] index) {
+        List<Integer> current = parseOperand(expr, lists, index);
+        while (index[0] < expr.length()) {
+            char op = expr.charAt(index[0]);
+            if (isOperator(op)) {
+                index[0]++;
+                List<Integer> operand = parseOperand(expr, lists, index);
+                current = applyOperator(current, op, operand);
+            } else if (op == ')') {
+                break;
+            } else {
+                throw new IllegalArgumentException("无效字符: '" + op + "'");
             }
         }
+        return current;
+    }
 
-
-        Set<Integer> collect = r.stream().collect(Collectors.toSet());
-        System.out.println("结果为");
-        for (Integer integer : collect) {
-            System.out.print(integer);
+    private List<Integer> parseOperand(String expr, List<List<Integer>> lists, int[] index) {
+        if (index[0] >= expr.length()) {
+            throw new IllegalArgumentException("表达式不完整");
         }
-
-        return collect;
-    }
-
-
-
-    public List<Integer> getJihe(List<List<Integer>> lists , char s){
-        if(s=='a'){
-            return lists.get(jihechangliang.JIHEA);
-        } else if (s == 'b') {
-            return lists.get(jihechangliang.JIHEB);
-        } else if (s == 'c') {
-            return lists.get(jihechangliang.JIHEC);
+        char c = expr.charAt(index[0]);
+        if (c == '(') {
+            index[0]++;
+            List<Integer> result = parseExpressionHelper(expr, lists, index);
+            if (index[0] >= expr.length() || expr.charAt(index[0]) != ')') {
+                throw new IllegalArgumentException("缺少右括号");
+            }
+            index[0]++;
+            return result;
+        } else if (c == 'a' || c == 'b' || c == 'c'|| c == 'd') {
+            List<Integer> set = getJihe(lists, c);
+            index[0]++;
+            return new ArrayList<>(set);
+        } else {
+            throw new IllegalArgumentException("无效操作数: " + c);
         }
-        return null;
     }
 
-    public List<Integer> getBingji(List<Integer> a,List<Integer> b){
-        a.addAll(b);
-        return a;
-    }
-    public List<Integer> getJiaoji(List<Integer> a,List<Integer> b){
-        a.retainAll(b);
-        return a;
+    private boolean isOperator(char c) {
+        return c == '∪' || c == '∩' || c == '△' || c == '-';
     }
 
-    public List<Integer> getchaji(List<Integer> a,List<Integer> b){
-        System.out.println(a);
-        System.out.println(b);
-        a.removeAll(b);
-        System.out.println(a);
-        return a;
-    }
-    public List<Integer> getbuji(List<Integer> a,List<Integer> b){
-        Set<Integer> s = new HashSet<>(a);
-        s.retainAll(b);
-        a.addAll(b);
-        a.removeAll(s);
-        return a;
+    private List<Integer> applyOperator(List<Integer> left, char op, List<Integer> right) {
+        switch (op) {
+            case '∪':
+                return getBingji(left, right);
+            case '∩':
+                return getJiaoji(left, right);
+            case '-':
+                return getChaji(left, right);
+            case '△':
+                return getBuji(left, right);
+            default:
+                throw new IllegalArgumentException("未知运算符: " + op);
+        }
     }
 
+    private List<Integer> getBingji(List<Integer> a, List<Integer> b) {
+        List<Integer> result = new ArrayList<>(a);
+        result.addAll(b);
+        return result;
+    }
+
+    private List<Integer> getJiaoji(List<Integer> a, List<Integer> b) {
+        List<Integer> result = new ArrayList<>(a);
+        result.retainAll(b);
+        return result;
+    }
+
+    private List<Integer> getChaji(List<Integer> a, List<Integer> b) {
+        List<Integer> result = new ArrayList<>(a);
+        result.removeAll(b);
+        return result;
+    }
+
+    private List<Integer> getBuji(List<Integer> a, List<Integer> b) {
+        Set<Integer> tmp = new HashSet<>(a);
+        tmp.retainAll(b);
+        List<Integer> result = new ArrayList<>();
+        result.addAll(a);
+        result.addAll(b);
+        result.removeAll(tmp);
+        return result;
+    }
+
+    private List<Integer> getJihe(List<List<Integer>> lists, char c) {
+        int idx = -1;
+        switch (c) {
+            case 'a': idx = 0; break;
+            case 'b': idx = 1; break;
+            case 'c': idx = 2; break;
+            case 'd': idx = 3; break;
+            default: throw new IllegalArgumentException("无效集合标识符: " + c);
+        }
+        List<Integer> set = lists.get(idx);
+        if (set == null) {
+            throw new IllegalArgumentException("集合" + c + "未提供");
+        }
+        return new ArrayList<>(set);
+    }
 }

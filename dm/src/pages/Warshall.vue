@@ -23,7 +23,7 @@ const createInputMatrix = () => {
     let diffY = 0;
     //检验是否为大于一的正整数
     const reg = /^[0-9]*[1-9][0-9]*$/;
-    if (!(reg.test(n) && n > 2 && n < 13 || n === "")) { return -1; }
+    if (!(reg.test(n) && n >= 2 && n < 13 || n === "")) { return -1; }
     //清空表格
     table.innerHTML = "";
     // 创建新的表格
@@ -43,6 +43,7 @@ const createInputMatrix = () => {
     heightMo = matrix.scrollHeight;
     if(heightMo === matrix.offsetHeight) {
         switch(+n){
+            case 2: heightMo = 143; break;
             case 3: heightMo = 243; break;
             case 4: heightMo = 340; break;
             case 5: heightMo = 430; break;
@@ -134,8 +135,10 @@ const compute = (() => {
                 // A_i = 
                 span.innerHTML = `<math class = "mathOutput" :style:"fontSize: {{textSize}} + 'px'><msub><mi>A</mi><mn>${i}</mn></msub><mo>=</mo></math>`;
                 matrix.appendChild(span);
+                
                 if(i === 0) {
-                    transformMatrix(inputTable, "stepsArea");
+                    const initialMatrix = inputTable.slice(0, n).map(row => row.slice(0, n));
+                    transformMatrix(initialMatrix, "stepsArea");
                     widthExpression += span.offsetWidth + comma.offsetWidth;
                     nLine = parseInt(matrix.offsetWidth / widthExpression);
                 } else {

@@ -1,200 +1,343 @@
 <script setup>
-import { reactive, ref, onMounted } from 'vue';
-import axios from '@/utlis/axios';
+import { reactive, ref, onMounted } from 'vue'
+import axios from '@/utlis/axios'
 
-const emit = defineEmits(["getInputForm", "getResponse"]); //定义宏事件
-const inputForm = reactive({ count: 0, node: [], link: '' }); // 输入表单
-const transferForm = reactive({ count: 0, node: [], link: [] }); // 组件传输表单
-let nodeSelected = ref();
-const minCount = 3;
-const ruleForm = ref();
+const emit = defineEmits(["getInputForm", "getResponse"])
+const minCount = 3
+
+// ======== 表单数据 ========
+const inputForm = reactive({
+  count: 0,   // 节点个数
+  node: [],   // 节点列表
+  edges: []   // 已添加的边
+})
+
+// 用于传给父组件/后端的
+const transferForm = reactive({
+  count: 0,
+  node: [],
+  link: []
+})
+
+// 选定起点
+const nodeSelected = ref()
+
+// 验证
+const ruleForm = ref()
 const rules = reactive({
   count: [{ required: true }],
   node: [{ required: true, message: '请输入节点', trigger: 'change' }],
-  link: [{ required: true, message: '请输入路径信息', trigger: 'blur' }]
-});
+})
 
-// 根据节点个数显示节点信息
-const showNode = n => {
-  inputForm.node = new Array();
+// ========== 1) 初始化：根据节点数生成默认节点 ==========
+function showNode(n) {
+  inputForm.node = []
   for (let i = 0; i < n; i++) {
-    inputForm.node.push(String.fromCharCode(65 + i));
+    inputForm.node.push(String.fromCharCode(65 + i))
   }
 }
 
-// 节点信息发生改变，更新起点下拉项
-const changeNode = value => {
-  inputForm.node = new Array();
-  value = value.split(',');
-  value.forEach(v => { inputForm.node.push(v); })
+// 若还支持自定义输入（逗号分隔）
+function changeNode(value) {
+  inputForm.node = value.split(',').map(v => v.trim())
 }
 
-// 提交表单信息
-const submitForm = async ruleForm => {
-  if (!ruleForm) return;
+// ========== 2) “添加边”表单（小区域） ==========
+const newEdgeForm = reactive({
+  node1: '',
+  node2: '',
+  weight: 1
+})
+
+function addEdge() {
+  if (!newEdgeForm.node1 || !newEdgeForm.node2) {
+    alert('请选择起点和终点')
+    return
+  }
+  if (newEdgeForm.node1 === newEdgeForm.node2) {
+    alert('起点和终点不能相同')
+    return
+  }
+  if (newEdgeForm.weight <= 0) {
+    alert('权值必须大于0')
+    return
+  }
+
+  // 插入 edges
+  inputForm.edges.push({
+    node1: newEdgeForm.node1,
+    node2: newEdgeForm.node2,
+    weight: newEdgeForm.weight
+  })
+
+  // 重置
+  newEdgeForm.node1 = ''
+  newEdgeForm.node2 = ''
+  newEdgeForm.weight = 1
+}
+
+// ========== 3) 删除边 ==========
+function removeEdge(index) {
+  inputForm.edges.splice(index, 1)
+}
+
+// ========== 4) 提交生成 ==========
+async function submitForm(ruleForm) {
+  if (!ruleForm) return
   await ruleForm.validate(valid => {
     if (valid) {
-      transferForm.count = inputForm.count;
-      transferForm.node = inputForm.node;
-      // 解析路径信息
-      !function(){
-        transferForm.link = [];
-        // 去除空格和换行
-        let str = inputForm.link.replace(/[ ]|[\r\n]/g,"");
-        str = str.split(',');
-        str = str.map( s => {
-          s = s.split(':');
-          transferForm.link.push([...s[0].split('-'), s[1]]);
-        });
-      }();
-      // 传送表单信息
-      emit("getInputForm", transferForm);
+      transferForm.count = inputForm.count
+      transferForm.node = inputForm.node
+      transferForm.link = inputForm.edges.map(e => [ e.node1, e.node2, e.weight ])
+      emit("getInputForm", transferForm)
     }
   })
 }
 
-// 重置输入框
-const resetForm = ruleForm => {
-  if (!ruleForm) return;
-  ruleForm.resetFields();
-  showNode(minCount);
+// ========== 5) 重置表单 ==========
+function resetForm(ruleForm) {
+  if (!ruleForm) return
+  ruleForm.resetFields()
+
+  showNode(minCount)
+  inputForm.edges = []
+  newEdgeForm.node1 = ''
+  newEdgeForm.node2 = ''
+  newEdgeForm.weight = 1
 }
 
-// 生成权重表格
-const createPowerTable = () => {
-  let powerTable = new Array();
+// ========== 6) 查找路径 ==========
+function createPowerTable() {
+  let powerTable = []
   inputForm.node.forEach(col => {
-    let rowArr = new Array();
+    let rowArr = []
     inputForm.node.forEach(row => {
-      if(col == row){
-        rowArr.push(0);
+      if (col === row) {
+        rowArr.push(0)
       } else {
-        let power = -1;
-        const len = transferForm.link.length;
-        for (let i = 0; i < len; i++) {
-          const link = transferForm.link[i];
-          if(col == link[0] && row == link[1] || col == link[1] && row == link[0]){
-            power = +link[2];
-            break;
+        let power = -1
+        for (let link of transferForm.link) {
+          if (
+            (col === link[0] && row === link[1]) ||
+            (col === link[1] && row === link[0])
+          ) {
+            power = +link[2]
+            break
           }
         }
-        rowArr.push(power);
+        rowArr.push(power)
       }
     })
-    powerTable.push(rowArr);
+    powerTable.push(rowArr)
   })
-  return powerTable;
+  return powerTable
 }
 
-const searchPath = () => {
-  // const response = {
-  //   jieguo:[
-  //     [0,10,1000,4,1000,1000],
-  //     [0,6,1000,4,10,1000],
-  //     [0,6,14,4,10,1000],
-  //     [0,6,11,4,10,22],
-  //     [0,6,11,4,10,16],
-  //     [0,6,11,4,10,16]],
-  //   lujing:['ADB:6', 'ADEC:11', 'AD:4', 'ADE:10', 'ADECF:16']
-  // }
-  axios.post(
-        "/dijkstra",
-        {
-            num: inputForm.count,
-            powerTable: createPowerTable(),
-            nodeSelected: nodeSelected.value.charCodeAt() - 65
-        }
-    ).then( response => {
-      let { jieguo: valueTable, lujing: result } = response.data;
-      // let { jieguo: valueTable, lujing: result } = response;
-      let resp = { };
-      let path = new Array();
-      let nodeStep = new Array();
-      let pathSort = new Array();
-      let count = 0;
-      // 分割result
-      result = result.map(r => r = r.split(":"));
-      result.forEach(r => { r[0] = [...r[0]]; pathSort.push(+r[1]); });
-      // 最短路径值排序
-      pathSort.sort((a, b) => a - b);
-      // 生成每步经过节点的数组并对最短路径排序
-      nodeStep.push(nodeSelected.value);
-      while(result.length != 0){
-        const lenR = result.length;
-        for(let i = 0; i < lenR; i++){
-          if(result[i][1] == pathSort[inputForm.count - 1 - lenR]){
-            const lenRI = result[i][0].length;
-            path.push(result[i]);
-            nodeStep.push(result[i][0][lenRI - 1]);
-            result.splice(i, 1);
-            break;
-          }
-        }
-        count += 1;
-        if(count > 20){ break; }
-      }      
-      // 传送后端数据
-      emit("getResponse", resp = {
-        nodeSelected: nodeSelected,
-        path: path,
-        valueTable: valueTable,
-        nodeStep: nodeStep
-      });
-    })
-};
+function searchPath() {
+  axios.post("/dijkstra", {
+    num: inputForm.count,
+    powerTable: createPowerTable(),
+    nodeSelected: nodeSelected.value.charCodeAt() - 65
+  })
+  .then(response => {
+    let { jieguo: valueTable, lujing: result } = response.data
+    let resp = {}
+    let path = []
+    let nodeStep = []
+    let pathSort = []
+    let count = 0
 
+    result = result.map(r => r.split(":"))
+    result.forEach(r => {
+      r[0] = [...r[0]]
+      pathSort.push(+r[1])
+    })
+    pathSort.sort((a, b) => a - b)
+
+    nodeStep.push(nodeSelected.value)
+    while(result.length !== 0) {
+      const lenR = result.length
+      for(let i = 0; i < lenR; i++) {
+        if(result[i][1] == pathSort[inputForm.count - 1 - lenR]) {
+          const lenRI = result[i][0].length
+          path.push(result[i])
+          nodeStep.push(result[i][0][lenRI - 1])
+          result.splice(i, 1)
+          break
+        }
+      }
+      count++
+      if(count > 20) break
+    }
+
+    emit("getResponse", resp = {
+      nodeSelected: nodeSelected,
+      path: path,
+      valueTable: valueTable,
+      nodeStep: nodeStep
+    })
+  })
+}
+
+// ========== 7) onMounted 初始化 ==========
 onMounted(() => {
-  // 节点信息初始化
-  showNode(minCount);
+  showNode(minCount)
 })
 </script>
 
 <template>
-    <!-- 输入表单 -->
-    <el-form ref="ruleForm" :model="inputForm" :rules="rules" class="inputArea">
-        <!-- 基本信息 -->
-      <el-form-item label="节点个数" prop="count">
-        <el-input-number v-model="inputForm.count" :min="minCount" :max="20" @change="showNode" />
-      </el-form-item>
-      <el-form-item label="节点信息" prop="node">
-        <el-input v-model.trim="inputForm.node" @change="changeNode"/>
-      </el-form-item>
-      <el-form-item label="路径信息" prop="link">
-        <el-input v-model.trim="inputForm.link" type="textarea" class="elTextarea" placeholder="A-B:3, A-C:5,&#10B-C:1" />
-      </el-form-item>
-      <!-- 按钮 -->
-      <div class="buttons">
+  <el-form
+    ref="ruleForm"
+    :model="inputForm"
+    :rules="rules"
+    class="inputArea"
+  >
+    <!-- 基本信息 -->
+    <el-form-item label="节点个数" prop="count">
+      <el-input-number
+        v-model="inputForm.count"
+        :min="minCount"
+        :max="10"
+        @change="showNode"
+      />
+    </el-form-item>
+    <el-form-item label="节点信息" prop="node">
+      <el-input
+        v-model.trim="inputForm.node"
+        @change="changeNode"
+      />
+    </el-form-item>
+
+    <!-- 添加边：占用区域小一些，做成单行或两行排布 -->
+    <div class="add-edge-inline">
+      <span>起点</span>
+      <el-select v-model="newEdgeForm.node1" placeholder="起点" style="width: 70px;">
+        <el-option
+          v-for="(n, idx) in inputForm.node"
+          :key="idx"
+          :label="n"
+          :value="n"
+        />
+      </el-select>
+
+      <span>终点</span>
+      <el-select v-model="newEdgeForm.node2" placeholder="终点" style="width: 70px;">
+        <el-option
+          v-for="(n, idx) in inputForm.node"
+          :key="idx"
+          :label="n"
+          :value="n"
+        />
+      </el-select>
+
+      <span>权值</span>
+      <el-input-number
+        v-model="newEdgeForm.weight"
+        :min="1"
+        style="width: 100px;"
+      />
+
+      <el-button type="primary" @click="addEdge">
+        添加
+      </el-button>
+    </div>
+
+    <!-- 已添加的边：容器固定高度并可滚动 -->
+    <div class="edges-list">
+  <div
+    v-for="(edge, index) in inputForm.edges"
+    :key="index"
+    class="edge-item"
+  >
+    <!-- 显示边信息 -->
+    <span class="edge-text">
+      {{ edge.node1 }} - {{ edge.node2 }} : {{ edge.weight }}
+    </span>
+    <!-- 删除按钮 -->
+    <el-button
+      type="danger"
+      size="small"
+      @click="removeEdge(index)"
+    >
+      删除
+    </el-button>
+  </div>
+</div>
+    <!-- 操作按钮区 -->
+    <div class="buttons">
       <el-form-item>
-      <el-button type="primary" @click="submitForm(ruleForm)">生成</el-button>
-      <el-button @click="resetForm(ruleForm)">重置</el-button>
+        <el-button type="primary" @click="submitForm(ruleForm)">生成</el-button>
+        <el-button @click="resetForm(ruleForm)">重置</el-button>
       </el-form-item>
+
       <el-form-item>
         <el-select class="selectNode" v-model="nodeSelected" placeholder="选择起点">
-          <el-option v-for="item in inputForm.node" :key="item" :label="item" :value="item" />
+          <el-option
+            v-for="item in inputForm.node"
+            :key="item"
+            :label="item"
+            :value="item"
+          />
         </el-select>
         <el-button @click="searchPath" type="success">查找路径</el-button>
       </el-form-item>
-      </div>
+    </div>
   </el-form>
 </template>
-  
+
 <style scoped>
-.inputArea{
-    width: 400px;
-    padding: 15px;
-    border: 1px solid #666;
-    border-radius: 8px;
+.inputArea {
+  width: 500px;
+  border: 1px solid #666;
+  border-radius: 8px;
+  padding: 15px;
 }
-:deep(.elTextarea textarea){
-  height: 100px;
-  resize: none;
+
+/* 添加边的区域 - 占用小一些，可用一行或两行 */
+.add-edge-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0;
 }
-.buttons{
+
+/* 列表容器 - 固定高度 + overflow auto */
+.edges-list {
+  /* 固定或最大高度，超出可滚动 */
+  max-height: 70px;      /* 可根据需求调整 */
+  overflow-y: auto;
+  
+  /* 让内部网格自动排成2列 */
+  display: grid;
+  grid-template-columns: 1fr 1fr;  /* 2 列平均分 */
+  gap: 8px;                        /* 网格项之间的间隙 */
+}
+
+/* 每个边是一格网格项 */
+.edge-item {
+  display: flex;                /* 一行内排 */
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px;
+  border: 1px solid #eee;       /* 简单分隔样式 */
+  border-radius: 4px;
+}
+
+/* 文本部分，可加一些间距或其他样式 */
+.edge-text {
+  margin-right: 8px;
+}
+
+
+/* 下方按钮区域 */
+.buttons {
   display: flex;
   justify-content: space-between;
   padding: 0 10px;
+  margin-top: 10px;
 }
-.selectNode{
+
+.selectNode {
   width: 100px;
   margin: 0 8px;
 }

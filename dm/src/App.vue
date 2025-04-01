@@ -5,7 +5,6 @@ const showIframe = ref(false);
 
 </script>
 
-
 <template>
   <!-- 导航栏 -->
   <div class="header clearfix">
@@ -18,6 +17,7 @@ const showIframe = ref(false);
       <li><RouterLink to = '/dijkstra'>Dijkstra算法</RouterLink></li>
       <li><RouterLink to = '/MST'>最小生成树</RouterLink></li>
       <li><RouterLink to = '/huffman'>Huffman算法</RouterLink></li>
+      <li><RouterLink to = '/BBG'>二部图</RouterLink></li>
     </ul>
     <div class="user">
       <img src="/image/user.png" alt="">

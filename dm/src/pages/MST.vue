@@ -340,10 +340,19 @@ function highlightAllEdges() {
   option.series.links.forEach(link => {
     link.lineStyle = { color: "Black" };
   });
-  // 2) 全部高亮指定颜色
-  option.series.links.forEach(link => {
-    link.lineStyle.color = "#19CAAD";
+  // 2) 将路径上的所有连线标记为绿色
+  lujing.forEach(link => {
+    const [n1, n2] = [link[0], link[1]];
+    option.series.links.forEach((link) => {
+      if (
+        (link.source === n1 && link.target === n2) ||
+        (link.source === n2 && link.target === n1)
+      ) {
+        link.lineStyle = { color: "#19CAAD" };
+      }
+    });
   });
+  
   // 3) 更新图
   chart.setOption(option);
 }

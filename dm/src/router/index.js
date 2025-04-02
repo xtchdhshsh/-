@@ -7,6 +7,7 @@ import Huffman from "@/pages/Huffman.vue";
 import function1 from "@/pages/function1.vue";
 import function2 from "@/pages/function2.vue";
 import function3 from "@/pages/function3.vue";
+import BBG from "@/pages/BBG.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -43,6 +44,10 @@ const router = createRouter({
         {
             path: '/function3',
             component: function3
+        },
+        {
+            path: '/BBG',
+            component: BBG
         },
     ]
 })

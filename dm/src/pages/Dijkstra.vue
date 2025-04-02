@@ -90,7 +90,7 @@ let option = {
             show: true,
             fontSize: 24,
             fontWeight: 700,
-            color: 'black'
+            color: 'white'
         },
         // 连线label
         edgeLabel: {
@@ -117,49 +117,69 @@ onMounted(() => {
 })
 
 // 获取并修改子组件传来的表单数据
-const getInput = f =>{
+const getInput = f => {
     chart.clear();
     num = f.count;
     nodes = ref([]);
     links = ref([]);
-    // 清空
+
+    // 清空原先的 ECharts data / links
     option.series.data = [];
     option.series.links = [];
-    // 生成节点坐标
-    !function(){
-        const nRow = num < 2 * NUM_LINE_GRAPH ? Math.ceil(num / 2) : NUM_LINE_GRAPH;
-        const nCol = num / nRow;
-        let yCoord = 100;
-        for (let i = 0; i < nCol; i++) {
-            let xCoord = i % 2 == 0 ? 0 : 50;
-            for (let j = 0; j < nRow; j++) {
-                const index = i * nRow + j;
-                xCoord += 100;
-                nodes.value.push({"name": f.node[index], 'x': xCoord, 'y': yCoord});
-                if(index + 1 >= num) { break; }
-            }
-            yCoord += 100;
+
+    // 生成“手动环形”坐标
+    !function() {
+        // 可以根据需求自定义以下三个参数
+        const centerX = 400; // 圆心X坐标
+        const centerY = 200; // 圆心Y坐标
+        const radius = 150;  // 环形半径
+
+        for (let i = 0; i < num; i++) {
+            // 均匀分配角度 [0, 2π)
+            const angle = Math.PI - (2 * Math.PI * i) / num;
+            // 圆周坐标公式
+            const xCoord = centerX + radius * Math.cos(angle);
+            const yCoord = centerY + radius * Math.sin(angle);
+
+            // f.node[i] 应该是节点名称
+            nodes.value.push({
+                name: f.node[i],
+                x: xCoord,
+                y: yCoord
+            });
         }
     }();
+
+    // 根据 f.link 创建双向边
     f.link.forEach(link => {
-        links.value.push({source: link[0], target: link[1], value: link[2]});
-        links.value.push({source: link[1], target: link[0], value: link[2]});
-    })
-    // 配置data
-    nodes.value.forEach(node => option.series.data.push({
-        name: node.name,
-        x: node.x,
-        y: node.y
-    }))
-    // 配置links
-    links.value.forEach(link => option.series.links.push({
-        source: link.source,
-        target: link.target,
-        value: link.value,
-        lineStyle: { color:'lightblack' }
-    }))
+        links.value.push({ source: link[0], target: link[1], value: link[2] });
+        links.value.push({ source: link[1], target: link[0], value: link[2] });
+    });
+
+    // 把手动生成的坐标写入 ECharts option
+    nodes.value.forEach(node => {
+        option.series.data.push({
+            name: node.name,
+            x: node.x,
+            y: node.y
+        });
+    });
+
+    // 写入边
+    links.value.forEach(link => {
+        option.series.links.push({
+            source: link.source,
+            target: link.target,
+            value: link.value,
+            lineStyle: { color:'lightblack' }
+        });
+    });
+
+    // 依然使用 layout: 'none'（在你的 option 中已经是 'none'）
+    // ECharts 不会再自动布局，节点初始呈圆环排布，但仍可随意拖拽
     chart.setOption(option);
-}
+};
+
 
 // 画最短路径
 const drawShortestPath = () => {
@@ -320,7 +340,7 @@ watch(currentStep, newValue => { carousel.value.setActiveItem(newValue); });
             <!-- 过程信息 -->
             <div id="processText">
                 <el-carousel ref="carousel" indicator-position="none" :autoplay="false">
-                    <el-carousel-item v-for="(p, i) in process">
+                    <el-carousel-item v-for="(p, i) in process" :key="i">
                         <div class="container">
                             <!-- 查找节点 -->
                             <p>第{{i + 1}}步：
@@ -329,7 +349,7 @@ watch(currentStep, newValue => { carousel.value.setActiveItem(newValue); });
                                 <span v-else>没有可到达点</span>
                             </p>
                             <!-- 查找节点的信息 -->
-                            <div v-for="n in p.accessibleNode">
+                            <div v-for="n in p.accessibleNode" :key="n.name">
                                 <p><span style="color: #19CAAD">{{n.name}}点：</span>
                                     <span v-if="n.state == 'change'">找到更短的路径，更新信息，</span>
                                     <span v-else>没找到更短的路径，保留原来的信息，</span>
@@ -375,7 +395,7 @@ main{
 }
 /* 输出表格 */
 .outputTable{
-    width: 400px;
+    width: 500px;
     height: 300px;
     border: 1px solid #666;
     border-radius: 8px;
@@ -383,7 +403,7 @@ main{
 }
 /* dijkstra演示 */
 #graph {
-    width: 800px;
+    width: 700px;
     height: 400px;
     border: 1px solid #666;
     border-radius: 8px;
@@ -391,6 +411,7 @@ main{
 /* 过程信息走马灯 */
 #processText{
     height: 200px;
+    width: 700px;
     border: 1px solid #666;
     border-radius: 8px;
     margin-top: 5px;

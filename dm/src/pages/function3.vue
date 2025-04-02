@@ -52,36 +52,29 @@ const tipbtn = value => {
 
 //提交按钮 事件监听
 const submitBtn = () => {
-    const submit =document.querySelector('.submit');
+    const submit = document.querySelector('.submit');
     //获取集合表单信息 并转换成数字型数组
-    const Aenter = document.querySelector('.Aenter') 
-    const Aarr = Aenter.value.split(',')
-    for(let i=0;i<Aarr.length;i++){
-    Aarr[i]=Aarr[i]-0
-    }
-    const Benter = document.querySelector('.Benter') 
-    const Barr = Benter.value.split(',')
-    for(let i=0;i<Barr.length;i++){
-    Barr[i]=Barr[i]-0
-    }
+    const Aenter = document.querySelector('.Aenter');
+    const Aarr = Aenter.value.trim() === '' ? [] : Aenter.value.split(',').map(Number);
 
-    const Center = document.querySelector('.Center') 
-    const Carr = Center.value.split(',')
-    for(let i=0;i<Carr.length;i++){
-    Carr[i]=Carr[i]-0
-    }
-    const formula = document.querySelector('.formula')
-    let F = formula.value
+    const Benter = document.querySelector('.Benter');
+    const Barr = Benter.value.trim() === '' ? [] : Benter.value.split(',').map(Number);
 
-    let Darr = []
-    if(F.includes('a')){
-    Darr.push('A')
+    const Center = document.querySelector('.Center');
+    const Carr = Center.value.trim() === '' ? [] : Center.value.split(',').map(Number);
+
+    const formula = document.querySelector('.formula');
+    let F = formula.value;
+
+    let Darr = [];
+    if (F.includes('a')) {
+        Darr.push('A');
     }
-    if(F.includes('b')){
-    Darr.push('B')
+    if (F.includes('b')) {
+        Darr.push('B');
     }
-    if(F.includes('c')){
-    Darr.push('C')
+    if (F.includes('c')) {
+        Darr.push('C');
     }
 
 
@@ -99,7 +92,12 @@ const submitBtn = () => {
         .then(result => {
         console.log(result)  
         let answer = document.querySelector('.answer')
-        answer.innerHTML = result.data
+        // 判断结果是否为空，若为空则显示Ø
+        if (!result.data || result.data.length === 0) {
+            answer.innerHTML = 'Ø';
+        } else {
+            answer.innerHTML = result.data;
+        }
         
         // define sets and set set intersections
         let temp = result.data.length
@@ -374,7 +372,7 @@ let AB = []
         
         <p>运算结果</p>
         <div class="answer">
-
+           
         </div>
         </div>
     </div>

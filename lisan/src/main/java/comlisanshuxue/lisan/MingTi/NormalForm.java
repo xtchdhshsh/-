@@ -1,6 +1,7 @@
 package comlisanshuxue.lisan.MingTi;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class NormalForm {
     String form;
@@ -253,25 +254,22 @@ public class NormalForm {
 
      */
     String comeTrue() {
-        String re = "";
-        int k=0;
+        StringBuilder re = new StringBuilder();
         System.out.println("成真赋值为:");
-        for (int i = 0; i < 8; i++) {
-            if (fo.truth[i * 2] == 1) {
-                //System.out.print(fo.va[1][i * 2] + " " + fo.va[2][i * 2] + " " + fo.va[3][i * 2]);
-                if (k == 0) {
-                    re += fo.va[1][i * 2] + " " + fo.va[2][i * 2] + " " + fo.va[3][i * 2];
-                    k++;
-                } else {
-                    re += "," + fo.va[1][i * 2] + " " + fo.va[2][i * 2] + " " + fo.va[3][i * 2];
+        int va_num=tr.count3; //变量个数
+        int num1= (int) Math.pow(2,4-va_num);
+        int num2= (int) Math.pow(2,va_num);
+        for(int i=0;i<num2;i++) {
+            for(int j=0;j<va_num;j++) {
+                if(fo.truth[i*num1]==1){
+                    if(i!=0) re.append(",");
+                    re.append(Arrays.toString(fo.va[i * num1]));
+                    if(j!=va_num-1) re.append(" ");
                 }
-
-                //System.out.print("   ");
             }
         }
-        System.out.println();
-        return re;
-
+        System.out.println(re);
+        return re.toString();
     }
 
     /*

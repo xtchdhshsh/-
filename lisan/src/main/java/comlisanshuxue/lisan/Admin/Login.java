@@ -37,10 +37,18 @@ public class Login {
     }
 
     //学生注册
-    @PostMapping("/register")
+    @PostMapping("/Register")
     public String register(String username, String password)
     {
         int result = userMapper.register(username, password);
+        if(result==0) return "注册失败";
+        else return "注册成功";
+    }
+    //学生注册
+    @PostMapping("/TeacherRegister")
+    public String TeacherRegister(String username, String password)
+    {
+        int result = userMapper.TeacherRegister(username, password);
         if(result==0) return "注册失败";
         else return "注册成功";
     }

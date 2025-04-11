@@ -16,4 +16,7 @@ public interface UserMapper {
 
     @Insert("insert into user(username,password,isteacher) values(#{username},#{password},0)")
     public int register(@Param("username") String username,@Param("password") String password);
+
+    @Insert("insert into user(username,password,isteacher) values(#{username},#{password},1)")
+    public int TeacherRegister(@Param("username") String username,@Param("password") String password);
 }

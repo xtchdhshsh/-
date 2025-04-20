@@ -1,0 +1,14 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-LisanApplication<lisan>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "comlisanshuxue.lisan.LisanApplication",
+            "projectName": "lisan",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}

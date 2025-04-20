@@ -17,6 +17,7 @@ public class Login {
     public String login(String username, String password)
     {
         String result = userMapper.login(username, password);
+        System.out.println("收到请求，用户名：" + username);
         if (result == null)
             return "login fail";
         else{

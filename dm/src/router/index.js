@@ -8,6 +8,9 @@ import function1 from "@/pages/function1.vue";
 import function2 from "@/pages/function2.vue";
 import function3 from "@/pages/function3.vue";
 import BBG from "@/pages/BBG.vue";
+import Login from "@/pages/Login.vue";
+import Register from "@/pages/Register.vue";
+import Profile from "@/pages/Profile.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -48,6 +51,18 @@ const router = createRouter({
         {
             path: '/BBG',
             component: BBG
+        },
+        {
+            path: '/Login',
+            component: Login
+        },
+        {
+            path: '/Register',
+            component: Register
+        },
+        {
+            path: '/Profile',
+            component: Profile
         },
     ]
 })

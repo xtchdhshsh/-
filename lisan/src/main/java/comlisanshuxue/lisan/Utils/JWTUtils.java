@@ -24,7 +24,7 @@ public class JWTUtils {
     }
 
     // 验证token  合法性
-    private static boolean validateToken(String authToken) {
+    public static boolean validateToken(String authToken) {
         try {
             Jwts.parser()
                     .verifyWith(KEY)

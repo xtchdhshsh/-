@@ -1,7 +1,41 @@
 <script setup>
 import { RouterView, RouterLink } from 'vue-router';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router'
 const showIframe = ref(false);
+
+const username = ref('')
+const userType = ref('')
+const isLoggedIn = ref(false)
+const handleLoginSuccess = (user, type) => {
+  username.value = user
+  userType.value = type
+  isLoggedIn.value = true
+}
+
+// 跳转个人中心页面
+const router = useRouter()
+const goToProfile = () => {
+  router.push('/profile')
+}
+
+const isHovering = ref(false)
+// 退出登录
+const logout = () => {
+  localStorage.removeItem('savedUsername')
+  localStorage.removeItem('savedPassword')
+  localStorage.removeItem('savedUserType')
+  localStorage.removeItem('rememberPassword')
+  localStorage.removeItem('token')
+  isLoggedIn.value = false;
+  username.value = '';
+  window.location.reload()
+};
+
+onMounted(() => {
+  username.value = localStorage.getItem('savedUsername')
+  isLoggedIn.value = !!username.value
+})
 
 </script>
 
@@ -19,14 +53,29 @@ const showIframe = ref(false);
       <li><RouterLink to = '/huffman'>Huffman算法</RouterLink></li>
       <li><RouterLink to = '/BBG'>二部图</RouterLink></li>
     </ul>
-    <div class="user">
-      <img src="/image/user.png" alt="">
-      <a href="">登录</a>
+
+    <div class="user" @mouseover="isHovering = true" @mouseleave="isHovering = false">
+      <img src="/image/user.png" alt="" class="user-icon">
+      
+      <!-- 用户名 -->
+      <template v-if="isLoggedIn">
+        <span class="username">{{ username }}</span>
+        <!-- 下拉框 -->
+        <div v-if="isHovering" class="dropdown">
+          <span @click="goToProfile">个人中心</span>
+          <span @click="logout">退出登录</span>
+        </div>
+      </template>
+      <!-- 登录按钮 -->
+      <template v-else>
+        <RouterLink to="/Login">登录</RouterLink>
+      </template>
     </div>
   </div>
+  
   <!-- 展示区 -->
   <div class="main">
-    <RouterView />
+    <RouterView @login-success="handleLoginSuccess" />
   </div>
 
 </template>
@@ -106,4 +155,43 @@ const showIframe = ref(false);
 body{
   background-color: #ececec42;
 }
+
+.user {
+  display: flex;
+  align-items: top;
+  font-weight: 700;
+  font-size: 18px;
+  color: white;
+}
+.user .user-icon {
+  filter: brightness(0) invert(1);
+  scale: 2;
+}
+.user .username {
+  cursor: pointer;
+}
+.user .username:hover {
+  color: #2f72dc;
+}
+
+/* 下拉框样式 */
+.dropdown {
+  position: absolute;
+  top: 62px;
+  right: 2px;
+  color: rgb(32, 28, 28);
+  width: 100px;
+  display: flex;
+  flex-direction: column;
+  z-index: 999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.50);
+  background-color: white;
+  font-size: 16px;
+  cursor: pointer;
+  text-align: center;
+}
+.dropdown span:hover {
+  color: #2f72dc;
+}
+
 </style>

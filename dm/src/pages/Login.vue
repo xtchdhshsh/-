@@ -11,7 +11,8 @@ const loading = ref(false)
 const form = ref({
   username: localStorage.getItem('savedUsername') || '',
   password: localStorage.getItem('savedPassword') || '',
-  remember: localStorage.getItem('rememberPassword') === 'true'
+  remember: localStorage.getItem('rememberPassword') === 'true',
+  userType: localStorage.getItem('savedUserType') || 'student'
 })
 
 const handleLogin = async () => {
@@ -19,7 +20,8 @@ const handleLogin = async () => {
     await loginForm.value.validate()
     loading.value = true
 
-    const res = await axios.post('/login', new URLSearchParams({
+    const endpoint = form.value.userType === 'student' ? '/login' : '/TeacherLogin'
+    const res = await axios.post(endpoint, new URLSearchParams({
       username: form.value.username,
       password: form.value.password
     }), {
@@ -28,23 +30,29 @@ const handleLogin = async () => {
       }
     })
 
-    if (form.value.remember) {
-      localStorage.setItem('savedUsername', form.value.username)
-      localStorage.setItem('savedPassword', form.value.password)
-      localStorage.setItem('rememberPassword', 'true')
-    } else {
-      localStorage.removeItem('savedUsername')
-      localStorage.removeItem('savedPassword')
-      localStorage.removeItem('rememberPassword')
-    }
+    
 
     if (res.data && res.data !== 'login fail') {
-      emit('login-success', form.value.username, true);
-      localStorage.setItem('token', res.data)
+      const token = res.data
+      localStorage.setItem('token', token)
+
+      // 登陆成功才保存数据
+      if (form.value.remember) {
+        localStorage.setItem('savedUsername', form.value.username)
+        localStorage.setItem('savedPassword', form.value.password)
+        localStorage.setItem('rememberPassword', 'true')
+        localStorage.setItem('savedUserType', form.value.userType)
+      } else {
+        localStorage.removeItem('savedUsername')
+        localStorage.removeItem('savedPassword')
+        localStorage.removeItem('rememberPassword')
+        localStorage.removeItem('savedUserType')
+      }
+
+      emit('login-success', form.value.username, form.value.userType)
       ElMessage.success('登录成功')
       router.push('/')
     } else {
-      console.log(res.data);
       ElMessage.error('用户名或密码错误')
     }
   } catch (error) {
@@ -60,7 +68,8 @@ const handleLogin = async () => {
 
 onMounted(() => {
   if (form.value.remember) {
-    form.value.password = localStorage.getItem('savedPassword')
+    form.value.password = localStorage.getItem('savedPassword') || ''
+    form.value.userType = localStorage.getItem('savedUserType') || 'student'
   }
 })
 </script>
@@ -108,9 +117,17 @@ onMounted(() => {
         </el-form-item>
       </div>
 
-      <div class="remember-group">
+      <div class="form-group user-type-row">
+      <label>用户类型 :</label>
+      <div class="user-type-options">
+        <el-radio-group v-model="form.userType">
+          <el-radio label="student">学生</el-radio>
+          <el-radio label="teacher">教师</el-radio>
+        </el-radio-group>
         <el-checkbox v-model="form.remember">记住密码</el-checkbox>
       </div>
+    </div>
+
 
       <button 
         type="submit" 
@@ -129,87 +146,94 @@ onMounted(() => {
 
 <style scoped>
 .container {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: min(90vw, 600px);
-    height: auto;
-    padding: clamp(1rem, 4vw, 2rem);
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
-    background: white;
-    border-radius: clamp(8px, 1.5vw, 12px);;
-    box-shadow: 0 0 20px, rgba(0, 0, 0, 0.1);
-    overflow: auto;
-    border: 1px solid black;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 600px);
+  padding: clamp(1rem, 4vw, 2rem);
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  background: white;
+  border-radius: clamp(8px, 1.5vw, 12px);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid black;
 }
 
 .form {
-    margin: clamp(1rem, 2vw, 2rem) 0;
-    display: flex;
-    flex-direction: column;
+  margin: clamp(1rem, 2vw, 2rem) 0;
+  display: flex;
+  flex-direction: column;
 }
+
 .form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
+
+.user-type-row .user-type-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
 .form-group label {
-    font-weight: 700;
-    color: hsl(0deg 0% 30%);
+  font-weight: 700;
+  color: hsl(0deg 0% 30%);
 }
+
 .form-group :deep(.el-input__wrapper) {
-    width: 100%;
-    padding: clamp(0.5rem, 1.5vw, 0.8rem);
-    border: 1px solid hsl(0deg 0% 85%);
-    border-radius: clamp(4px, 1vw, 6px);
-    font-size: inherit;
-    transition: border-color 0.2s;
-    background: transparent;
-    box-shadow: none !important;
+  width: 100%;
+  padding: clamp(0.5rem, 1.5vw, 0.8rem);
+  border: 1px solid hsl(0deg 0% 85%);
+  border-radius: clamp(4px, 1vw, 6px);
+  font-size: inherit;
+  transition: border-color 0.2s;
+  background: transparent;
+  box-shadow: none !important;
 }
+
 .form-group :deep(.el-input__wrapper.is-focus) {
   border-color: hsla(210, 80%, 48%, 0.3);
 }
 
-.remember-group {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.submit-btn {
+  margin-top: clamp(1rem, 3vw, 1.5rem);
+  width: 100%;
+  padding: clamp(0.7rem, 2vmin, 0.9rem);
+  background-color: hsl(210deg 40% 30%);
+  color: white;
+  border: none;
+  border-radius: clamp(4px, 1vw, 6px);
+  cursor: pointer;
+  font-size: inherit;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  transition: background-color 0.2s;
 }
 
-.submit-btn {
-    margin-top: clamp(1rem, 3vw, 1.5rem);
-    width: 100%;
-    padding: clamp(0.7rem, 2vmin, 0.9rem);
-    background-color: hsl(210deg 40% 30%);
-    color: white;
-    border: none;
-    border-radius: clamp(4px, 1vw, 6px);
-    cursor: pointer;
-    font-size: inherit;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    transition: background-color 0.2s;
-}
 .submit-btn:hover {
-    background-color: hsl(210deg 45% 25%);
+  background-color: hsl(210deg 45% 25%);
 }
+
 .submit-btn:disabled {
   background-color: hsl(210deg 30% 40%);
   cursor: not-allowed;
 }
 
 .toggle {
-    text-align: center;
-    margin-top: clamp(1rem, 3vmin, 1.5rem);
-    font-size: clamp(0.8rem, 2vmin, 1rem);
-    color: hsl(0deg 0% 40%);
+  text-align: center;
+  margin-top: clamp(1rem, 3vmin, 1.5rem);
+  font-size: clamp(0.8rem, 2vmin, 1rem);
+  color: hsl(0deg 0% 40%);
 }
+
 .toggle a {
-    color: hsl(210deg 60% 40%);
-    text-decoration: none;
-    font-weight: 500;
+  color: hsl(210deg 60% 40%);
+  text-decoration: none;
+  font-weight: 500;
 }
 
 .custom-icon {

@@ -5,9 +5,11 @@ import { useRouter } from 'vue-router'
 const showIframe = ref(false);
 
 const username = ref('')
+const userType = ref('')
 const isLoggedIn = ref(false)
-const handleLoginSuccess = (user) => {
+const handleLoginSuccess = (user, type) => {
   username.value = user
+  userType.value = type
   isLoggedIn.value = true
 }
 
@@ -20,10 +22,14 @@ const goToProfile = () => {
 const isHovering = ref(false)
 // 退出登录
 const logout = () => {
-  localStorage.removeItem('username');
-  localStorage.removeItem('token');
+  localStorage.removeItem('savedUsername')
+  localStorage.removeItem('savedPassword')
+  localStorage.removeItem('savedUserType')
+  localStorage.removeItem('rememberPassword')
+  localStorage.removeItem('token')
   isLoggedIn.value = false;
   username.value = '';
+  window.location.reload()
 };
 
 onMounted(() => {

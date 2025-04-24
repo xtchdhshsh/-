@@ -9,7 +9,8 @@ const loading = ref(false)
 const form = ref({
     username: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    userType: 'student'
 })
 
 // 密码强度检查
@@ -21,11 +22,10 @@ const checkPasswordStrength = () => {
     passwordStrength.value = [hasLetter, hasNumber, hasSpecial].filter(Boolean).length
 }
 
-// 密码一致性验证
+// 验证密码一致性
 const validatePassword = () => {
     return form.value.password === form.value.confirmPassword
 }
-
 const handleRegister = async () => {
     if (!form.value.username || !form.value.password || !form.value.confirmPassword) {
         return ElMessage.warning('请填写完整信息')
@@ -41,7 +41,9 @@ const handleRegister = async () => {
 
     try {
         loading.value = true
-        const res = await axios.post('/Register', new URLSearchParams({
+
+        const endpoint = form.value.userType === 'student' ? '/Register' : '/TeacherRegister'
+        const res = await axios.post(endpoint, new URLSearchParams({
             username: form.value.username,
             password: form.value.password
         }), {
@@ -54,7 +56,7 @@ const handleRegister = async () => {
             ElMessage.success('注册成功')
             router.push('/login?from=register')
         } else {
-            console.log(res.data)
+            // console.log(res.data)
             ElMessage.error(res.data || '注册失败')
         }
     } catch (err) {
@@ -83,7 +85,7 @@ const handleRegister = async () => {
                 <el-input
                     v-model="form.username"
                     type="text"
-                    placeholder="3-20位字符"
+                    placeholder="3 - 20 位字符"
                     :maxlength="20"
                     style="font-size: 1rem;"
                 >
@@ -99,7 +101,7 @@ const handleRegister = async () => {
                 <el-input
                     v-model="form.password"
                     type="password"
-                    placeholder="8-20位字母数字组合"
+                    placeholder="8 - 20 位字母数字组合"
                     show-password
                     style="font-size: 1rem;"
                     @input="checkPasswordStrength"
@@ -146,6 +148,14 @@ const handleRegister = async () => {
                 </span>
             </div>
 
+            <div class="form-group">
+                <label>用户类型</label>
+                <el-radio-group v-model="form.userType">
+                    <el-radio label="student">学生</el-radio>
+                    <el-radio label="teacher">教师</el-radio>
+                </el-radio-group>
+            </div>
+
             <button 
                 type="submit" 
                 class="submit-btn"
@@ -183,18 +193,15 @@ const handleRegister = async () => {
     flex-direction: column;
     gap: clamp(1rem, 2vw, 1.2rem);
 }
-
 .form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
-
 .form-group label {
     font-weight: 700;
     color: hsl(0deg 0% 30%);
 }
-
 .form-group :deep(.el-input__wrapper) {
     width: 100%;
     padding: clamp(0.5rem, 1.5vw, 0.8rem);
@@ -205,12 +212,10 @@ const handleRegister = async () => {
     background: transparent;
     box-shadow: none !important;
 }
-
 .form-group :deep(.el-input__wrapper.is-focus),
 .form-group :deep(.el-input__wrapper:hover) {
     border-color: hsl(200, 80%, 48%);
 }
-
 .form-group :deep(.el-input__wrapper.is-error) {
     border-color: hsl(0, 70%, 50%);
 }
@@ -221,7 +226,6 @@ const handleRegister = async () => {
   gap: 8px;
   margin-top: 4px;
 }
-
 .strength-bar {
   height: 4px;
   flex: 1;
@@ -229,23 +233,18 @@ const handleRegister = async () => {
   border-radius: 2px;
   transition: all 0.3s;
 }
-
 .strength-bar.active {
   background: hsl(var(--strength-color));
 }
-
 .strength-bar:nth-child(1).active {
   --strength-color: 0, 70%, 50%;
 }
-
 .strength-bar:nth-child(2).active {
   --strength-color: 30, 80%, 50%;
 }
-
 .strength-bar:nth-child(3).active {
   --strength-color: 120, 60%, 50%;
 }
-
 .strength-text {
   font-size: 0.8rem;
   color: hsl(var(--strength-color));
@@ -261,7 +260,6 @@ const handleRegister = async () => {
     border-radius: 0 6px 6px 0;
     animation: fadeIn 0.3s ease-out;
 }
-
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -274,7 +272,7 @@ const handleRegister = async () => {
 }
 
 .submit-btn {
-    margin-top: clamp(1rem, 3vw, 1.5rem);
+    margin-top: clamp(1rem, 1vw, 1.5rem);
     width: 100%;
     padding: clamp(0.7rem, 2vmin, 0.9rem);
     background-color: hsl(210deg 40% 30%);
@@ -287,11 +285,9 @@ const handleRegister = async () => {
     letter-spacing: 0.05em;
     transition: background-color 0.2s;
 }
-
 .submit-btn:hover {
     background-color: hsl(210deg 45% 25%);
 }
-
 .submit-btn:disabled {
     background-color: hsl(210deg 30% 40%);
     cursor: not-allowed;
@@ -303,7 +299,6 @@ const handleRegister = async () => {
     font-size: clamp(0.8rem, 2vmin, 1rem);
     color: hsl(0deg 0% 40%);
 }
-
 .toggle a {
     color: hsl(210deg 60% 40%);
     text-decoration: none;

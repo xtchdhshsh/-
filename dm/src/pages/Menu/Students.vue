@@ -46,9 +46,9 @@ watch(selectedClass, () => {
         <el-select v-model="selectedClass" placeholder="请选择课程" style="width: 240px;">
           <el-option
             v-for="cls in classOptions"
-            :key="cls"
-            :label="cls"
-            :value="cls"
+            :key="cls.name"
+            :label="cls.name"
+            :value="cls.name"
           />
         </el-select>
       </el-form-item>

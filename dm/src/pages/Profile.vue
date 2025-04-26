@@ -6,24 +6,23 @@ import axios from '@/utlis/axios'
 const route = useRoute()
 const menus = [
   {
-    title: '学生管理',
+    title: '用户管理',
     items: [
       { label: '用户信息', to: '/Menu/Users' },
-      
-      { label: '课程作业', to: ''}
     ]
   },
   {
     title: '课程管理',
     items: [
-      { label: '加入课程', to: '/Menu/Courses' },
+      { label: '课程作业', to: ''},
       { label: '课程公告', to: '/Menu/Announcements' }
     ]
   },
   {
-    title: '系统管理',
+    title: '班级管理',
     items: [
-      { label: '学生信息', to: '/Menu/Students' },
+      { label: '加入班级', to: '/Menu/Courses' },
+      { label: '学生管理', to: '/Menu/Students' },
       { label: '教师管理', to: '/Menu/Teachers' }
     ]
   }
@@ -31,14 +30,17 @@ const menus = [
 
 // 获取课程
 const courses = ref([])
+const teacherName = ref('')
 const fetchCourses = async () => {
   try {
     const res = await axios.post('/getclass', {}, {
       headers: { token: localStorage.getItem('token') }
     })
-    const rawData = res.data
-    const matches = rawData.match(/\[([^\[\]]+?)\]/g) || []
-    courses.value = matches.map(match => match.replace(/[\[\]]/g, ''))
+    const rawData = res.data || {}
+    teacherName.value = rawData.teachername || ''
+    courses.value = (rawData.classname || []).map(name => ({
+      name: name.replace(/^\[|\]$/g, '')
+    }))
   } catch (err) {
     console.error('获取课程失败', err)
     ElMessage.error('获取课程失败')
@@ -48,6 +50,7 @@ const fetchCourses = async () => {
 onMounted(fetchCourses)
 
 provide('courses', courses)
+provide('teacherName', teacherName)
 provide('fetchCourses', fetchCourses)
 </script>
 
@@ -93,6 +96,7 @@ provide('fetchCourses', fetchCourses)
   width: 200px;
   height: auto;
   background-color: #f5f5f5;
+  margin: 5px 20px;
   padding: 10px;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 }

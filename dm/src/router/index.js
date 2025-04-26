@@ -91,7 +91,7 @@ const router = createRouter({
                 },
                 {
                     path: '',
-                    redirect: '/Menu/User'
+                    redirect: '/Menu/Users'
                 }
             ]
         },

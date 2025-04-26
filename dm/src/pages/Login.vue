@@ -10,7 +10,7 @@ const loading = ref(false)
 
 const form = ref({
   username: localStorage.getItem('savedUsername') || '',
-  password: localStorage.getItem('savedPassword') || '',
+  // password: localStorage.getItem('savedPassword') || '',
   remember: localStorage.getItem('rememberPassword') === 'true',
   userType: localStorage.getItem('savedUserType') || 'student'
 })
@@ -30,8 +30,6 @@ const handleLogin = async () => {
       }
     })
 
-    
-
     if (res.data && res.data !== 'login fail') {
       const token = res.data
       localStorage.setItem('token', token)
@@ -39,12 +37,12 @@ const handleLogin = async () => {
       // 登陆成功才保存数据
       if (form.value.remember) {
         localStorage.setItem('savedUsername', form.value.username)
-        localStorage.setItem('savedPassword', form.value.password)
+        // localStorage.setItem('savedPassword', form.value.password)
         localStorage.setItem('rememberPassword', 'true')
         localStorage.setItem('savedUserType', form.value.userType)
       } else {
         localStorage.removeItem('savedUsername')
-        localStorage.removeItem('savedPassword')
+        // localStorage.removeItem('savedPassword')
         localStorage.removeItem('rememberPassword')
         localStorage.removeItem('savedUserType')
       }
@@ -68,7 +66,7 @@ const handleLogin = async () => {
 
 onMounted(() => {
   if (form.value.remember) {
-    form.value.password = localStorage.getItem('savedPassword') || ''
+    // form.value.password = localStorage.getItem('savedPassword') || ''
     form.value.userType = localStorage.getItem('savedUserType') || 'student'
   }
 })

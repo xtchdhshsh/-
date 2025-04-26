@@ -29,7 +29,7 @@ const logout = () => {
   localStorage.removeItem('token')
   isLoggedIn.value = false;
   username.value = '';
-  window.location.reload()
+  router.push('/Login')
 };
 
 onMounted(() => {

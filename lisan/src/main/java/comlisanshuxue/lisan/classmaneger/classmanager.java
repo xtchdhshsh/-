@@ -34,12 +34,13 @@ public class classmanager {
     }
 
     @RequestMapping("/getclass")
-    public String getclass(@RequestHeader("token") String token){
+    public Result getclass(@RequestHeader("token") String token){
         String teacher = JWTUtils.getUsername(token);
-        ArrayList<String> re = new ArrayList<>();
+        ArrayList<String> classname = new ArrayList<>();
         for (Map<String, String> map : classmapper.getclass(teacher))
-            re.add(map.values().toString());
-        return re.toString();
+            classname.add(map.values().toString());
+        Result re = new Result(teacher,classname);
+        return re;
     }
 
     @RequestMapping("/addstudent")

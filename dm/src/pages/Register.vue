@@ -1,7 +1,6 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
 import axios from '@/utlis/axios'
 
 const router = useRouter()
@@ -151,8 +150,8 @@ const handleRegister = async () => {
             <div class="form-group">
                 <label>用户类型</label>
                 <el-radio-group v-model="form.userType">
-                    <el-radio label="student">学生</el-radio>
-                    <el-radio label="teacher">教师</el-radio>
+                    <el-radio :value="'student'">学生</el-radio>
+                    <el-radio :value="'teacher'">教师</el-radio>
                 </el-radio-group>
             </div>
 

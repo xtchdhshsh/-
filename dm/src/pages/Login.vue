@@ -121,8 +121,8 @@ onMounted(() => {
       <label>用户类型 :</label>
       <div class="user-type-options">
         <el-radio-group v-model="form.userType">
-          <el-radio label="student">学生</el-radio>
-          <el-radio label="teacher">教师</el-radio>
+          <el-radio :value="'student'">学生</el-radio>
+          <el-radio :value="'teacher'">教师</el-radio>
         </el-radio-group>
         <el-checkbox v-model="form.remember">记住密码</el-checkbox>
       </div>

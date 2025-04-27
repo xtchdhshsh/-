@@ -3,14 +3,14 @@ import { ref, inject } from 'vue'
 import axios from '@/utlis/axios'
 
 const courses = inject('courses')
-const teacherName = inject('teacherName')
-const fetchCourses = inject('fetchCourses')
+// const teacherName = inject('teacherName') // 暂时不用
+const fetchCourses = inject('fetchCourses') // from Profile.vue
 
-// 添加课程
+// 添加班级
 const newClassName = ref('')
 const addCourse = async () => {
   if (!newClassName.value.trim()) {
-    ElMessage.warning('请输入课程名')
+    ElMessage.warning('请输入班级名')
     return
   }
   try {
@@ -26,17 +26,17 @@ const addCourse = async () => {
       ElMessage.error('添加失败')
     }
   } catch (err) {
-    console.error('添加课程失败', err)
-    ElMessage.error('添加课程请求出错')
+    console.error('添加班级失败', err)
+    ElMessage.error('添加班级请求出错')
   }
 }
 
-// 加入课程
+// 加入班级
 const studentName = ref('')
 const loadingMap = ref({})
 const joinCourse = async (classname) => {
   if (!studentName.value.trim()) {
-    ElMessage.warning('请先填写学生学号')
+    ElMessage.warning('请先输入要添加学生的学号')
     return
   }
 
@@ -57,7 +57,7 @@ const joinCourse = async (classname) => {
       ElMessage.error('加入失败，请检查输入')
     }
   } catch (err) {
-    console.error('加入课程失败', err)
+    // console.error('加入课程失败', err)
     ElMessage.error('加入课程请求出错')
   } finally {
     loadingMap.value[classname] = false
@@ -87,7 +87,7 @@ const uploadExcel = async (options) => {
       ElMessage.error(res.data || '导入失败')
     }
   } catch (err) {
-    console.error('上传出错', err)
+    // console.error('上传出错', err)
     ElMessage.error('上传失败')
   }
 }
@@ -104,7 +104,7 @@ const uploadExcel = async (options) => {
 
     <div class="toolbar" style="margin-top: 20px;">
       <el-input v-model="studentName" placeholder="请输入学生学号" style="width: 200px; margin-right: 10px" />
-      <el-text type="info">输入学号后，点击对应课程右边的加入按钮</el-text>
+      <el-text type="info">输入学号后，点击对应班级右边的加入按钮</el-text>
     </div>
 
     <el-table :data="courses" border style="margin-top: 20px">
@@ -114,9 +114,9 @@ const uploadExcel = async (options) => {
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="200">
+      <el-table-column label="操作" width="180px">
         <template #default="{ row }">
-          <div style="display: flex; align-items: center;">
+          <div style="display: flex; align-items: center; justify-content: space-around;">
             <el-button 
               type="success" 
               size="small" 
@@ -154,6 +154,6 @@ const uploadExcel = async (options) => {
   align-items: center;
 }
 h2 {
-  font-size: 28px;
+  font-size: 32px;
 }
 </style>

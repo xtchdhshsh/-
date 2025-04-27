@@ -5,6 +5,7 @@ import axios from '@/utlis/axios'
 
 const router = useRouter()
 const loading = ref(false)
+
 const form = ref({
     username: '',
     password: '',
@@ -29,11 +30,9 @@ const handleRegister = async () => {
     if (!form.value.username || !form.value.password || !form.value.confirmPassword) {
         return ElMessage.warning('请填写完整信息')
     }
-    
     if (form.value.password.length < 8 || form.value.password.length > 20) {
-        return ElMessage.warning('密码长度需在8-20位之间')
+        return ElMessage.warning('密码长度需在 8 - 20位之间')
     }
-    
     if (!validatePassword()) {
         return ElMessage.warning('两次密码输入不一致')
     }
@@ -59,6 +58,7 @@ const handleRegister = async () => {
             ElMessage.error(res.data || '注册失败')
         }
     } catch (err) {
+        // HACK: 数据库还没有验证相同用户名重复注册
         if (err.response?.data?.includes('已存在')) {
             ElMessage.error('用户名已存在')
         } else {
@@ -89,7 +89,7 @@ const handleRegister = async () => {
                     style="font-size: 1rem;"
                 >
                     <template #prefix>
-                        <span class="custom-icon">👤</span>
+                        <span>👤</span>
                     </template>
                 </el-input>
             </div>
@@ -102,25 +102,27 @@ const handleRegister = async () => {
                     type="password"
                     placeholder="8 - 20 位字母数字组合"
                     show-password
-                    style="font-size: 1rem;"
                     @input="checkPasswordStrength"
                     :maxlength="20"
+                    style="font-size: 1rem;"
                 >
                     <template #prefix>
-                        <span class="custom-icon">🔒</span>
+                        <span>🔒</span>
                     </template>
                 </el-input>
                 <div v-if="form.password" class="password-strength">
-                <div :class="['strength-bar', { active: passwordStrength >= 1 }]"></div>
-                <div :class="['strength-bar', { active: passwordStrength >= 2 }]"></div>
-                <div :class="['strength-bar', { active: passwordStrength >= 3 }]"></div>
-                <span class="strength-text">
-                    {{
-                        passwordStrength === 1 ? '弱' :
-                        passwordStrength === 2 ? '中' :
-                        passwordStrength === 3 ? '强' : ''
-                    }}
-                </span>
+                    <!-- 显示密码强度样式 -->
+                    <div :class="['strength-bar', { active: passwordStrength >= 1 }]"></div>
+                    <div :class="['strength-bar', { active: passwordStrength >= 2 }]"></div>
+                    <div :class="['strength-bar', { active: passwordStrength >= 3 }]"></div>
+                    <!-- FIXME: 字体样式不生效 -->
+                    <span class="strength-text">
+                        {{
+                            passwordStrength === 1 ? '弱' :
+                            passwordStrength === 2 ? '中' :
+                            passwordStrength === 3 ? '强' : ''
+                        }}
+                    </span>
                 </div>
             </div>
 
@@ -136,7 +138,7 @@ const handleRegister = async () => {
                     style="font-size: 1rem;"
                 >
                     <template #prefix>
-                        <span class="custom-icon">🔒</span>
+                        <span>🔒</span>
                     </template>
                 </el-input>
                 <span 
@@ -171,21 +173,23 @@ const handleRegister = async () => {
 </template>
 
 <style scoped>
+/* 窗口 */
 .container {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: min(90vw, 750px);
+    width: min(90vw, 680px);
     height: auto;
     padding: clamp(1rem, 4vw, 2rem);
-    font-size: clamp(1rem, 2.5vw, 1.2rem);
     background: white;
-    border-radius: clamp(8px, 1.5vw, 12px);
-    overflow: auto;
     border: 1px solid black;
+    border-radius: clamp(8px, 1.5vw, 12px);
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    overflow: auto;
 }
 
+/* 表单 */
 .form {
     margin: clamp(1rem, 2vw, 2rem) 0;
     display: flex;
@@ -204,59 +208,59 @@ const handleRegister = async () => {
 .form-group :deep(.el-input__wrapper) {
     width: 100%;
     padding: clamp(0.5rem, 1.5vw, 0.8rem);
+    background: transparent;
     border: 1px solid hsl(0deg 0% 85%);
     border-radius: clamp(4px, 1vw, 6px);
+    box-shadow: none !important;
     font-size: inherit;
     transition: border-color 0.2s;
-    background: transparent;
-    box-shadow: none !important;
 }
 .form-group :deep(.el-input__wrapper.is-focus),
 .form-group :deep(.el-input__wrapper:hover) {
-    border-color: hsl(200, 80%, 48%);
+    border-color: hsl(200, 80%, 50%);
 }
 .form-group :deep(.el-input__wrapper.is-error) {
     border-color: hsl(0, 70%, 50%);
 }
 
+/* 密码 */
 .password-strength {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 .strength-bar {
-  height: 4px;
-  flex: 1;
-  background: hsl(0deg 0% 85%);
-  border-radius: 2px;
-  transition: all 0.3s;
+    height: 4px;
+    background: hsl(0deg 0% 85%);
+    border-radius: 2px;
+    flex: 1;
+    transition: all 0.3s;
 }
 .strength-bar.active {
-  background: hsl(var(--strength-color));
+    background: hsl(var(--strength-color));
 }
 .strength-bar:nth-child(1).active {
-  --strength-color: 0, 70%, 50%;
+    --strength-color: 0, 70%, 50%;
 }
 .strength-bar:nth-child(2).active {
-  --strength-color: 30, 80%, 50%;
+    --strength-color: 30, 80%, 50%;
 }
 .strength-bar:nth-child(3).active {
-  --strength-color: 120, 60%, 50%;
+    --strength-color: 120, 60%, 50%;
 }
 .strength-text {
-  font-size: 0.8rem;
-  color: hsl(var(--strength-color));
-  width: 20px;
+    width: 20px;
+    font-size: 1rem;
+    color: hsl(var(--strength-color));
 }
-
 .error-msg {
     padding: 0.4rem 0.6rem;
-    font-size: 0.9rem;
-    color: hsl(0, 70%, 50%);
     background-color: hsl(0, 85%, 95%);
     border-left: 3px solid hsl(0, 64%, 48%);
     border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+    color: hsl(0, 70%, 50%);
     animation: fadeIn 0.3s ease-out;
 }
 @keyframes fadeIn {
@@ -270,42 +274,39 @@ const handleRegister = async () => {
     }
 }
 
+/* 提交注册 */
 .submit-btn {
-    margin-top: clamp(1rem, 1vw, 1.5rem);
     width: 100%;
+    margin-top: clamp(1rem, 1vw, 1.5rem);
     padding: clamp(0.7rem, 2vmin, 0.9rem);
-    background-color: hsl(210deg 40% 30%);
-    color: white;
+    background-color: hsl(200deg 40% 30%);
     border: none;
     border-radius: clamp(4px, 1vw, 6px);
-    cursor: pointer;
     font-size: inherit;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1rem;
+    color: white;
+    cursor: pointer;
     transition: background-color 0.2s;
 }
 .submit-btn:hover {
-    background-color: hsl(210deg 45% 25%);
+    background-color: hsl(200deg 45% 20%);
 }
 .submit-btn:disabled {
-    background-color: hsl(210deg 30% 40%);
+    background-color: hsl(200deg 30% 40%);
     cursor: not-allowed;
 }
 
+/* 切换登录 */
 .toggle {
-    text-align: center;
     margin-top: clamp(1rem, 3vmin, 1.5rem);
+    text-align: center;
     font-size: clamp(0.8rem, 2vmin, 1rem);
     color: hsl(0deg 0% 40%);
 }
 .toggle a {
-    color: hsl(210deg 60% 40%);
     text-decoration: none;
     font-weight: 500;
-}
-
-.custom-icon {
-    margin-right: 8px;
-    font-size: 16px;
+    color: hsl(200deg 60% 40%);
 }
 </style>

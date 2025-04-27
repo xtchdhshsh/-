@@ -3,47 +3,33 @@ import { ref, onMounted } from 'vue'
 
 const dataList = ref([])
 
-// 发布作业相关
+// 作业
 const homeworkDialogVisible = ref(false)
 const homeworkContent = ref('')
-
-// 发布公告相关
-const noticeDialogVisible = ref(false)
-const noticeContent = ref('')
-
-const fetchData = async () => {
-  try {
-    dataList.value = []
-  } catch (err) {
-    console.error('加载教师数据失败', err)
-  }
-}
-
 const publishHomework = () => {
   if (!homeworkContent.value.trim()) {
     ElMessage.warning('作业内容不能为空')
     return
   }
-  console.log('发布作业内容:', homeworkContent.value)
+  // console.log('发布作业内容:', homeworkContent.value)
   homeworkDialogVisible.value = false
   homeworkContent.value = ''
   ElMessage.success('作业发布成功')
 }
 
+// 公告
+const noticeDialogVisible = ref(false)
+const noticeContent = ref('')
 const publishNotice = () => {
   if (!noticeContent.value.trim()) {
     ElMessage.warning('公告内容不能为空')
     return
   }
-  console.log('发布公告内容:', noticeContent.value)
+  // console.log('发布公告内容:', noticeContent.value)
   noticeDialogVisible.value = false
   noticeContent.value = ''
   ElMessage.success('公告发布成功')
 }
-
-onMounted(() => {
-  fetchData()
-})
 </script>
 
 <template>
@@ -97,7 +83,7 @@ onMounted(() => {
 }
 h2 {
   padding-bottom: 16px;
-  font-size: 28px;
+  font-size: 32px;
 }
 .button-group {
   margin-bottom: 20px;

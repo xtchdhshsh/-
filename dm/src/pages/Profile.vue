@@ -1,32 +1,40 @@
 <script setup>
 import { RouterView, RouterLink, useRoute } from 'vue-router';
-import { ref, provide, onMounted } from 'vue'
+import { ref, provide, onMounted, computed } from 'vue'
 import axios from '@/utlis/axios'
 
 const route = useRoute()
-const menus = [
-  {
-    title: '用户管理',
-    items: [
-      { label: '用户信息', to: '/Menu/Users' },
-    ]
-  },
-  {
-    title: '课程管理',
-    items: [
-      { label: '课程作业', to: ''},
-      { label: '课程公告', to: '/Menu/Announcements' }
-    ]
-  },
-  {
-    title: '班级管理',
-    items: [
-      { label: '加入班级', to: '/Menu/Courses' },
-      { label: '学生管理', to: '/Menu/Students' },
-      { label: '教师管理', to: '/Menu/Teachers' }
-    ]
+const userType = ref('')
+const menus = computed(() => {
+  const allMenus = [
+    {
+      title: '用户管理',
+      items: [
+        { label: '用户信息', to: '/Menu/Users' },
+      ]
+    },
+    {
+      title: '课程管理',
+      items: [
+        { label: '课程作业', to: ''},
+        { label: '课程公告', to: '/Menu/Announcements' }
+      ]
+    },
+  ]
+
+  if (userType.value === 'teacher') {
+    allMenus.push({
+      title: '班级管理',
+      items: [
+        { label: '加入班级', to: '/Menu/Courses' },
+        { label: '学生管理', to: '/Menu/Students' },
+        { label: '教师管理', to: '/Menu/Teachers' }
+      ]
+    })
   }
-]
+
+  return allMenus
+})
 
 // 获取课程
 const courses = ref([])
@@ -42,16 +50,19 @@ const fetchCourses = async () => {
       name: name.replace(/^\[|\]$/g, '')
     }))
   } catch (err) {
-    console.error('获取课程失败', err)
+    // console.error('获取课程失败', err)
     ElMessage.error('获取课程失败')
   }
 }
 
-onMounted(fetchCourses)
+onMounted(() => {
+  fetchCourses()
+  userType.value = localStorage.getItem('savedUserType')
+})
 
-provide('courses', courses)
-provide('teacherName', teacherName)
-provide('fetchCourses', fetchCourses)
+provide('courses', courses) // to Course.vue, Student.vue
+// provide('teacherName', teacherName) // 暂时不用
+provide('fetchCourses', fetchCourses) // to Course.vue, Student.vue
 </script>
 
 <template>
@@ -90,42 +101,40 @@ provide('fetchCourses', fetchCourses)
 .profile {
   display: flex;
   background-color: #fafafa;
+  min-height: 80vh;
 }
 
+/* 左侧 Sidebar 栏 */
 .sidebar {
   width: 200px;
   height: auto;
-  background-color: #f5f5f5;
   margin: 5px 20px;
   padding: 10px;
+  background-color: #f5f5f5;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
 }
-
 .sidebar-title {
-  font-size: 24px;
   margin-bottom: 22px;
   padding-left: 10px;
+  font-size: 24px;
   color: #333;
 }
-
 .menu-section {
   margin-bottom: 20px;
 }
-
 .section-title {
+  margin: 15px 0 10px 5px;
   font-size: 16px;
   color: #666;
-  margin: 15px 0 10px 5px;
 }
-
 .menu-item {
-  display: block;
+  margin: 2px 0;
   padding: 10px 20px;
+  border-radius: 6px;
   font-size: 14px;
   color: black;
   text-decoration: none;
-  border-radius: 6px;
-  margin: 2px 0;
+  display: block;
 }
 .menu-item:hover {
   background-color: #f0f0f0;
@@ -133,10 +142,11 @@ provide('fetchCourses', fetchCourses)
 }
 .menu-item.active {
   background-color: #e1f5fe;
-  color: #2196f3;
   font-weight: 700;
+  color: #2196f3;
 }
 
+/* 右侧显示内容 */
 .main-content {
   flex: 1;
   padding: 20px 30px;

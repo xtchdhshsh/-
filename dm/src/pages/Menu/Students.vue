@@ -7,6 +7,7 @@ const classOptions = inject('courses')
 const students = ref([])
 const selectedClass = ref('')
 
+// 获取学生数据
 const fetchStudents = async () => {
   if (!selectedClass.value) {
     students.value = []
@@ -26,11 +27,10 @@ const fetchStudents = async () => {
       course: selectedClass.value
     }))
   } catch (err) {
-    console.error('拉取学生失败', err)
+    // console.error('拉取学生失败', err)
     ElMessage.error('获取学生列表失败')
   }
 }
-
 
 watch(selectedClass, () => {
   fetchStudents()
@@ -42,8 +42,8 @@ watch(selectedClass, () => {
     <h2>学生信息管理</h2>
 
     <el-form style="margin-bottom: 20px;">
-      <el-form-item label="选择课程">
-        <el-select v-model="selectedClass" placeholder="请选择课程" style="width: 240px;">
+      <el-form-item label="班级">
+        <el-select v-model="selectedClass" placeholder="请选择班级" style="width: 240px;">
           <el-option
             v-for="cls in classOptions"
             :key="cls.name"
@@ -69,6 +69,6 @@ watch(selectedClass, () => {
 }
 h2 {
   padding-bottom: 16px;
-  font-size: 28px;
+  font-size: 32px;
 }
 </style>

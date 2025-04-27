@@ -32,6 +32,6 @@ onMounted(() => {
 }
 h2 {
   padding-bottom: 16px;
-  font-size: 28px;
+  font-size: 32px;
 }
 </style>

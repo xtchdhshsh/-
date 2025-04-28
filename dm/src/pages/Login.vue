@@ -10,14 +10,16 @@ const loading = ref(false)
 
 const form = ref({
   username: localStorage.getItem('savedUsername') || '',
-  password: localStorage.getItem('savedPassword') || '',
+  // password: localStorage.getItem('savedPassword') || '',
   remember: localStorage.getItem('rememberPassword') === 'true',
   userType: localStorage.getItem('savedUserType') || 'student'
 })
 
 const handleLogin = async () => {
   try {
+    // HACK: 数据库还没做登录表单验证
     await loginForm.value.validate()
+
     loading.value = true
 
     const endpoint = form.value.userType === 'student' ? '/login' : '/TeacherLogin'
@@ -30,8 +32,6 @@ const handleLogin = async () => {
       }
     })
 
-    
-
     if (res.data && res.data !== 'login fail') {
       const token = res.data
       localStorage.setItem('token', token)
@@ -39,27 +39,29 @@ const handleLogin = async () => {
       // 登陆成功才保存数据
       if (form.value.remember) {
         localStorage.setItem('savedUsername', form.value.username)
-        localStorage.setItem('savedPassword', form.value.password)
+        // localStorage.setItem('savedPassword', form.value.password)
         localStorage.setItem('rememberPassword', 'true')
         localStorage.setItem('savedUserType', form.value.userType)
       } else {
         localStorage.removeItem('savedUsername')
-        localStorage.removeItem('savedPassword')
+        // localStorage.removeItem('savedPassword')
         localStorage.removeItem('rememberPassword')
         localStorage.removeItem('savedUserType')
       }
 
-      emit('login-success', form.value.username, form.value.userType)
+      emit('login-success', form.value.username, form.value.userType) // 传到 APP.vue
       ElMessage.success('登录成功')
       router.push('/')
     } else {
-      ElMessage.error('用户名或密码错误')
+      ElMessage.error('登陆失败')
     }
   } catch (error) {
+    // HACK: 数据库还没做验证
     if (error.response?.status === 401) {
       ElMessage.error('用户名或密码错误')
     } else {
-      ElMessage.error(error.message || '登录失败')
+      // ElMessage.error(error.message || '登录失败')
+      ElMessage.error(error.message)
     }
   } finally {
     loading.value = false
@@ -68,7 +70,7 @@ const handleLogin = async () => {
 
 onMounted(() => {
   if (form.value.remember) {
-    form.value.password = localStorage.getItem('savedPassword') || ''
+    // form.value.password = localStorage.getItem('savedPassword') || ''
     form.value.userType = localStorage.getItem('savedUserType') || 'student'
   }
 })
@@ -94,7 +96,7 @@ onMounted(() => {
             style="font-size: 1rem;"
           >
             <template #prefix>
-              <span class="custom-icon">👤</span>
+              <span>👤</span>
             </template>
           </el-input>
         </el-form-item>
@@ -111,7 +113,7 @@ onMounted(() => {
             style="font-size: 1rem;"
           >
             <template #prefix>
-              <span class="custom-icon">🔒</span>
+              <span>🔒</span>
             </template>
           </el-input>
         </el-form-item>
@@ -121,8 +123,8 @@ onMounted(() => {
       <label>用户类型 :</label>
       <div class="user-type-options">
         <el-radio-group v-model="form.userType">
-          <el-radio label="student">学生</el-radio>
-          <el-radio label="teacher">教师</el-radio>
+          <el-radio :value="'student'">学生</el-radio>
+          <el-radio :value="'teacher'">教师</el-radio>
         </el-radio-group>
         <el-checkbox v-model="form.remember">记住密码</el-checkbox>
       </div>
@@ -145,99 +147,89 @@ onMounted(() => {
 </template>
 
 <style scoped>
+/* 窗口 */
 .container {
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(90vw, 600px);
+  width: min(90vw, 680px);
+  height: auto;
   padding: clamp(1rem, 4vw, 2rem);
-  font-size: clamp(1rem, 2.5vw, 1.2rem);
   background: white;
-  border-radius: clamp(8px, 1.5vw, 12px);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   border: 1px solid black;
+  border-radius: clamp(8px, 1.5vw, 12px);
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  overflow: auto;
 }
 
+/* 表单 */
 .form {
   margin: clamp(1rem, 2vw, 2rem) 0;
   display: flex;
   flex-direction: column;
 }
-
 .form-group {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-
 .user-type-row .user-type-options {
   display: flex;
-  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
 }
-
 .form-group label {
   font-weight: 700;
   color: hsl(0deg 0% 30%);
 }
-
 .form-group :deep(.el-input__wrapper) {
   width: 100%;
   padding: clamp(0.5rem, 1.5vw, 0.8rem);
+  background: transparent;
   border: 1px solid hsl(0deg 0% 85%);
   border-radius: clamp(4px, 1vw, 6px);
+  box-shadow: none !important;
   font-size: inherit;
   transition: border-color 0.2s;
-  background: transparent;
-  box-shadow: none !important;
 }
-
 .form-group :deep(.el-input__wrapper.is-focus) {
   border-color: hsla(210, 80%, 48%, 0.3);
 }
 
+/* 提交登录 */
 .submit-btn {
-  margin-top: clamp(1rem, 3vw, 1.5rem);
   width: 100%;
+  margin-top: clamp(1rem, 3vw, 1.5rem);
   padding: clamp(0.7rem, 2vmin, 0.9rem);
-  background-color: hsl(210deg 40% 30%);
-  color: white;
+  background-color: hsl(200deg 40% 30%);
   border: none;
   border-radius: clamp(4px, 1vw, 6px);
   cursor: pointer;
   font-size: inherit;
   font-weight: 500;
+  color: white;
   letter-spacing: 0.05em;
   transition: background-color 0.2s;
 }
-
 .submit-btn:hover {
   background-color: hsl(210deg 45% 25%);
 }
-
 .submit-btn:disabled {
   background-color: hsl(210deg 30% 40%);
   cursor: not-allowed;
 }
 
+/* 切换登录 */
 .toggle {
   text-align: center;
   margin-top: clamp(1rem, 3vmin, 1.5rem);
   font-size: clamp(0.8rem, 2vmin, 1rem);
   color: hsl(0deg 0% 40%);
 }
-
 .toggle a {
   color: hsl(210deg 60% 40%);
   text-decoration: none;
   font-weight: 500;
-}
-
-.custom-icon {
-  margin-right: 8px;
-  font-size: 16px;
 }
 </style>

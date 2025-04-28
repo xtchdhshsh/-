@@ -5,8 +5,7 @@ import axios from '@/utlis/axios'
 
 const route = useRoute()
 const userType = ref('')
-const menus = computed(() => {
-  const allMenus = [
+const menus = [
     {
       title: '用户管理',
       items: [
@@ -20,21 +19,15 @@ const menus = computed(() => {
         { label: '课程公告', to: '/Menu/Announcements' }
       ]
     },
-  ]
-
-  if (userType.value === 'teacher') {
-    allMenus.push({
+    {
       title: '班级管理',
       items: [
         { label: '加入班级', to: '/Menu/Courses' },
         { label: '学生管理', to: '/Menu/Students' },
         { label: '教师管理', to: '/Menu/Teachers' }
       ]
-    })
-  }
-
-  return allMenus
-})
+    }
+]
 
 // 获取课程
 const courses = ref([])

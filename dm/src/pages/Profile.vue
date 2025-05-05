@@ -15,8 +15,7 @@ const menus = [
     {
       title: '课程管理',
       items: [
-        { label: '课程作业', to: ''},
-        { label: '课程公告', to: '/Menu/Announcements' },
+        // { label: '课程公告', to: '/Menu/Announcements' },
         { label: '题库管理', to: '/Menu/QuestionBank'},
         { label: '提交管理', to: '/Menu/Submission'}
       ]
@@ -26,7 +25,7 @@ const menus = [
       items: [
         { label: '加入班级', to: '/Menu/Courses' },
         { label: '学生管理', to: '/Menu/Students' },
-        { label: '教师管理', to: '/Menu/Teachers' }
+        // { label: '教师管理', to: '/Menu/Teachers' }
       ]
     }
 ]

@@ -16,7 +16,7 @@
       <el-table
         :data="list"
         border
-        style="width: 100%"
+        style="width: 100%; margin-top: 20px"
         :header-cell-style="{ textAlign: 'center' }"
       >
         <el-table-column prop="id" label="ID" width="80" align="center" />
@@ -148,12 +148,12 @@
     
     <style scoped>
   .page-wrapper {
-    padding: 24px;
-    max-width: 1100px;
-    margin: auto;
+    padding: 0 20px;
+    max-width: 1200px;
+    /* margin: auto; */
   }
   .title {
-    font-size: 22px;
+    font-size: 32px;
     font-weight: 600;
     margin-bottom: 16px;
   }

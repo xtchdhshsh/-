@@ -75,10 +75,11 @@ onMounted(() => {
 
 <style scoped>
 .page {
-  padding: 20px;
+  padding: 0 20px;
   max-width: 1200px;
 }
 h2 {
   margin-bottom: 20px;
+  font-size: 32px;
 }
 </style>

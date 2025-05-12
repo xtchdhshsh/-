@@ -16,9 +16,9 @@ public interface ClassMapper {
     @Select("Select classname from class where teacher = #{teacher}")
     public List<Map<String,String>> getclass(@Param("teacher") String teacher);
 
-    @Insert("insert into class_student(classname,studentname) values(#{classname},#{studentname})")
-    public int addstudent(@Param("classname") String classname,@Param("studentname") String studentname);
+    @Insert("insert into class_student(classname,studentname,teachername) values(#{classname},#{studentname},#{teacher})")
+    public int addstudent(@Param("classname") String classname,@Param("studentname") String studentname,@Param("teacher") String teacher);
 
-    @Select("Select studentname from class_student where classname = #{classname}")
-    public List<Map<String,String>> getstudent(@Param("classname") String classname);
+    @Select("Select studentname from class_student where classname = #{classname} and teachername = #{teacher}")
+    public List<Map<String,String>> getstudent(@Param("classname") String classname,@Param("teacher") String teacher);
 }

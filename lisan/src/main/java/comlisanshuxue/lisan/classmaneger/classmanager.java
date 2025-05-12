@@ -44,13 +44,15 @@ public class classmanager {
     }
 
     @RequestMapping("/addstudent")
-    public String addstudent(String classname,String studentname){
-        int re = classmapper.addstudent(classname,studentname);
+    public String addstudent(String classname,String studentname,@RequestHeader("token") String token){
+        String teacher = JWTUtils.getUsername(token);
+        int re = classmapper.addstudent(classname,studentname,teacher);
         if(re==1) return "success";
         else return "fail";
     }
     @PostMapping("/addstudentbyexcel")
-    public String addstudentbyexcel(@RequestParam("file") MultipartFile file,String classname) throws IOException {
+    public String addstudentbyexcel(@RequestParam("file") MultipartFile file,String classname,@RequestHeader("token") String token) throws IOException {
+        String teacher = JWTUtils.getUsername(token);
         if (!Objects.equals(file.getContentType(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
             return "仅支持.xlsx格式文件";
         }
@@ -61,15 +63,16 @@ public class classmanager {
         XSSFSheet sheet = workbook.getSheetAt(0);
         int maxRow = sheet.getLastRowNum();
         for (int row = 0; row <= maxRow; row++) {
-            classmapper.addstudent(classname, String.valueOf(sheet.getRow(row).getCell(0)));
+            classmapper.addstudent(classname, String.valueOf(sheet.getRow(row).getCell(0)),teacher);
         }
         return "success";
     }
 
     @RequestMapping("/getstudent")
-    public String getstudent(String classname){
+    public String getstudent(String classname,@RequestHeader("token") String token){
+        String teacher = JWTUtils.getUsername(token);
         ArrayList<String> re = new ArrayList<>();
-        for (Map<String, String> map : classmapper.getstudent(classname))
+        for (Map<String, String> map : classmapper.getstudent(classname,teacher))
             re.add(map.values().toString());
         return re.toString();
     }

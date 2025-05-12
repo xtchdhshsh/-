@@ -39,7 +39,7 @@ watch(selectedClass, () => {
 
 <template>
   <div class="page">
-    <h2>学生信息管理</h2>
+    <h2>学生管理</h2>
 
     <el-form style="margin-bottom: 20px;">
       <el-form-item label="班级">

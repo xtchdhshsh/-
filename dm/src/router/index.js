@@ -19,6 +19,7 @@ import Announcements from '@/pages/Menu/Announcements.vue';
 import Submission from "@/pages/Menu/Submission.vue";
 import QuestionBank from "@/pages/Menu/QuestionBank.vue";
 import Answer from "@/pages/Answer.vue";
+import Sort from "@/pages/Sort.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -59,6 +60,10 @@ const router = createRouter({
         {
             path: '/BBG',
             component: BBG
+        },
+        {
+            path: '/Sort',
+            component: Sort
         },
         {
             path: '/Login',

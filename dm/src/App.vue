@@ -52,6 +52,7 @@ onMounted(() => {
       <li><RouterLink to = '/MST'>最小生成树</RouterLink></li>
       <li><RouterLink to = '/huffman'>Huffman算法</RouterLink></li>
       <li><RouterLink to = '/BBG'>二部图</RouterLink></li>
+      <li><RouterLink to = '/Sort'>排序算法</RouterLink></li>
     </ul>
 
     <div class="user" @mouseover="isHovering = true" @mouseleave="isHovering = false">
@@ -92,14 +93,19 @@ onMounted(() => {
 *{
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
 .header{
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   height: 65px;
   min-width: 1000px;
   background: linear-gradient(to left,#2c5364,#203A43,#0F2027);
   border-bottom: 2px solid black;
-  overflow: hidden;
   margin-bottom: 10px;
 }
 .header h1{
@@ -183,7 +189,7 @@ body{
   width: 100px;
   display: flex;
   flex-direction: column;
-  z-index: 999;
+  z-index: 2000;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.50);
   background-color: white;
   font-size: 16px;
@@ -192,5 +198,9 @@ body{
 }
 .dropdown span:hover {
   color: #2f72dc;
+}
+
+.main {
+  padding-top: 65px;
 }
 </style>

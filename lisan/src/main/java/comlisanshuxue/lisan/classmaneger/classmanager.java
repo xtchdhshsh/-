@@ -3,6 +3,7 @@ package comlisanshuxue.lisan.classmaneger;
 
 import comlisanshuxue.lisan.Mapper.ClassMapper;
 import comlisanshuxue.lisan.Utils.JWTUtils;
+import org.apache.poi.ss.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,24 +51,6 @@ public class classmanager {
         if(re==1) return "success";
         else return "fail";
     }
-    @PostMapping("/addstudentbyexcel")
-    public String addstudentbyexcel(@RequestParam("file") MultipartFile file,String classname,@RequestHeader("token") String token) throws IOException {
-        String teacher = JWTUtils.getUsername(token);
-        if (!Objects.equals(file.getContentType(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
-            return "仅支持.xlsx格式文件";
-        }
-        InputStream inputStream = file.getInputStream();
-
-        XSSFWorkbook workbook = new XSSFWorkbook(inputStream);
-
-        XSSFSheet sheet = workbook.getSheetAt(0);
-        int maxRow = sheet.getLastRowNum();
-        for (int row = 0; row <= maxRow; row++) {
-            classmapper.addstudent(classname, String.valueOf(sheet.getRow(row).getCell(0)),teacher);
-        }
-        return "success";
-    }
-
     @RequestMapping("/getstudent")
     public String getstudent(String classname,@RequestHeader("token") String token){
         String teacher = JWTUtils.getUsername(token);
@@ -77,4 +60,34 @@ public class classmanager {
         return re.toString();
     }
 
+    @PostMapping("/addstudentbyexcel")
+    public String addStudentByExcel(@RequestParam("file") MultipartFile file,String classname,@RequestHeader("token") String token) throws IOException {
+        // 验证文件类型
+        String teacher = JWTUtils.getUsername(token);
+        String contentType = file.getContentType();
+        if (!(contentType != null
+                && (contentType.equals("application/vnd.ms-excel")
+                ||contentType.equals("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))))
+        {
+            return "仅支持.xls和.xlsx格式文件";
+        }
+
+        InputStream inputStream = file.getInputStream();
+
+        Workbook workbook = WorkbookFactory.create(inputStream);
+
+        Sheet sheet = workbook.getSheetAt(0);
+        int maxRow = sheet.getLastRowNum();
+
+        for (int row = 5; row < maxRow; row++) {
+            Row currentRow = sheet.getRow(row);
+            if (currentRow != null) {
+                Cell cell = currentRow.getCell(1);
+                if (cell != null) {
+                    classmapper.addstudent(classname, String.valueOf(new DataFormatter().formatCellValue(cell)),teacher);
+                }
+            }
+        }
+        return "success";
+    }
 }

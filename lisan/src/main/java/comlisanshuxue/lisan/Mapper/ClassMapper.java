@@ -21,4 +21,11 @@ public interface ClassMapper {
 
     @Select("Select studentname from class_student where classname = #{classname} and teachername = #{teacher}")
     public List<Map<String,String>> getstudent(@Param("classname") String classname,@Param("teacher") String teacher);
+
+    @Insert("insert into class(classname,teacher,class) values(#{classname},#{teacher},#{cl})")
+    public int newaddclass(@Param("classname")String classname,@Param("teacher") String teacher,@Param("cl") String cl);
+
+    @Insert("insert into class_student(classname,studentname,teachername,class) values(#{classname},#{studentname},#{teacher},#{cl})")
+    public int newaddstudent(@Param("classname") String classname,@Param("studentname") String studentname,@Param("teacher") String teacher,@Param("cl") String cl);
+
 }

@@ -11,30 +11,28 @@ const goBack = () => {
 
 const mode = ref('manual')
 
-// 表单字段
 const className = ref('')
 const courseName = ref('')
-const semester = ref('')
-const studentName = ref('')
 
 // 添加班级
 const addCourse = async () => {
-  if (!className.value.trim() || !courseName.value.trim() || !semester.value.trim()) {
+  if (!className.value.trim() || !courseName.value.trim()) {
     ElMessage.warning('请填写完整的班级信息')
     return
   }
 
+  const params = new URLSearchParams()
+  params.append('cl', className.value)
+  params.append('classname', courseName.value)
+
   try {
-    const res = await axios.post('/addclass', {
-      classname: className.value,
-      coursename: courseName.value,
-      semester: semester.value
-    }, {
+    const res = await axios.post('/addclass', params, {
       headers: { token: localStorage.getItem('token') }
     })
 
     if (res.data === 'success') {
       ElMessage.success('添加班级成功')
+      router.back() // 返回 Course.vue
     } else {
       ElMessage.error(res.data || '添加失败')
     }
@@ -43,40 +41,9 @@ const addCourse = async () => {
   }
 }
 
-// 手工添加学生
-const joinCourse = async () => {
-  if (!studentName.value.trim() || !className.value.trim()) {
-    ElMessage.warning('请填写班级名和学生学号')
-    return
-  }
-
-  try {
-    const res = await axios.post('/addstudent', null, {
-      headers: { token: localStorage.getItem('token') },
-      params: {
-        classname: className.value,
-        studentname: studentName.value
-      }
-    })
-    if (res.data === 'success') {
-      ElMessage.success(`学生 ${studentName.value} 加入 ${className.value} 成功`)
-      studentName.value = ''
-    } else {
-      ElMessage.error(res.data || '添加学生失败')
-    }
-  } catch (err) {
-    ElMessage.error('添加学生请求出错')
-  }
-}
-
-// 批量导入学生
+// 批量导入学生，并自动创建班级
 const uploadExcel = async (options) => {
   const { file } = options
-
-  if (!className.value.trim()) {
-    ElMessage.warning('请先填写班级名称')
-    return
-  }
 
   const formData = new FormData()
   formData.append('file', file)
@@ -105,7 +72,8 @@ const uploadExcel = async (options) => {
   <div class="page">
     <div 
       style="display: flex; align-items: center; margin-bottom: 16px; cursor: pointer; color: #409EFF;" 
-      @click="goBack">
+      @click="goBack"
+    >
       <el-icon :size="16"><ArrowLeft /></el-icon>
       <span style="margin-left: 2px; font-size: 16px;">返回</span>
     </div>
@@ -118,24 +86,13 @@ const uploadExcel = async (options) => {
     </el-radio-group>
 
     <el-form label-width="100px" style="max-width: 600px;">
-      
       <template v-if="mode === 'manual'">
         <el-form-item label="班级名称">
-            <el-input v-model="className" placeholder="请输入班级名称" />
+          <el-input v-model="className" placeholder="请输入班级名称" />
         </el-form-item>
         <el-form-item label="课程名称">
           <el-input v-model="courseName" placeholder="请输入课程名称" />
         </el-form-item>
-        <el-form-item label="学期">
-          <el-input v-model="semester" placeholder="请输入当前学期" />
-        </el-form-item>
-
-        <!-- <el-form-item label="学生学号">
-          <el-input v-model="studentName" placeholder="请输入学生学号" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="success" @click="joinCourse">添加学生</el-button>
-        </el-form-item> -->
 
         <el-form-item>
           <el-button type="primary" @click="addCourse">创建班级</el-button>

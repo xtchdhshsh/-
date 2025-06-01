@@ -15,7 +15,6 @@ const menus = [
     {
       title: '课程管理',
       items: [
-        // { label: '课程公告', to: '/Menu/Announcements' },
         { label: '题库管理', to: '/Menu/QuestionBank'},
         { label: '提交管理', to: '/Menu/Submission'}
       ]
@@ -25,24 +24,32 @@ const menus = [
       items: [
         { label: '查看班级', to: '/Menu/Courses' },
         { label: '学生管理', to: '/Menu/Students' },
-        // { label: '教师管理', to: '/Menu/Teachers' }
       ]
     }
 ]
 
 // 获取课程
 const courses = ref([])
-const teacherName = ref('')
 const fetchCourses = async () => {
   try {
     const res = await axios.post('/getclass', {}, {
       headers: { token: localStorage.getItem('token') }
     })
+
+    // console.log(res.data)
+
     const rawData = res.data || {}
-    teacherName.value = rawData.teachername || ''
-    courses.value = (rawData.classname || []).map(name => ({
-      name: name.replace(/^\[|\]$/g, '')
-    }))
+    if (Array.isArray(rawData.classname) && Array.isArray(rawData.clname)) {
+      courses.value.length = 0
+      const len = Math.min(rawData.classname.length, rawData.clname.length)
+      for (let i = 0; i < len; i++) {
+        courses.value.push({
+          classname: rawData.classname[i],
+          clname: rawData.clname[i],
+          teachername: rawData.teachername || ''
+        })
+      }
+    }
   } catch (err) {
     // console.error('获取课程失败', err)
     ElMessage.error('获取课程失败')
@@ -95,17 +102,21 @@ provide('fetchCourses', fetchCourses) // to Course.vue, Student.vue
 .profile {
   display: flex;
   background-color: #fafafa;
-  min-height: 80vh;
+  min-height: 100vh;
 }
 
 /* 左侧 Sidebar 栏 */
 .sidebar {
+  position: fixed;
+  top: 70px;
+  left: 0;
   width: 200px;
   height: auto;
   margin: 5px 20px;
   padding: 10px;
   background-color: #f5f5f5;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
 }
 .sidebar-title {
   margin-bottom: 22px;
@@ -142,7 +153,9 @@ provide('fetchCourses', fetchCourses) // to Course.vue, Student.vue
 
 /* 右侧显示内容 */
 .main-content {
+  margin-left: 220px;
   flex: 1;
-  padding: 20px 30px;
+  padding: 30px 40px;
+  overflow: auto;
 }
 </style>

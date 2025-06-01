@@ -1,7 +1,9 @@
 <script setup>
-import { ref, inject, watch } from 'vue'
+import { ref, inject, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import axios from '@/utlis/axios'
 
+const route = useRoute()
 const classOptions = inject('courses')
 
 const students = ref([])
@@ -34,6 +36,14 @@ const fetchStudents = async () => {
 
 watch(selectedClass, () => {
   fetchStudents()
+})
+
+// 组件加载时，从路由 query 读取参数
+onMounted(() => {
+  const queryClass = route.query.classname
+  if (queryClass) {
+    selectedClass.value = queryClass
+  }
 })
 </script>
 

@@ -520,6 +520,8 @@ h1 {
   position: absolute;
   bottom: -36px;
   text-align: center;
+  background-color: #f5f5f5;
+  padding: 0.1rem;
 }
 
 .swap-history {

@@ -23,7 +23,7 @@ const menus = [
     {
       title: '班级管理',
       items: [
-        { label: '加入班级', to: '/Menu/Courses' },
+        { label: '查看班级', to: '/Menu/Courses' },
         { label: '学生管理', to: '/Menu/Students' },
         // { label: '教师管理', to: '/Menu/Teachers' }
       ]

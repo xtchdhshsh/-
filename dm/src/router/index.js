@@ -19,6 +19,9 @@ import Announcements from '@/pages/Menu/Announcements.vue';
 import Submission from "@/pages/Menu/Submission.vue";
 import QuestionBank from "@/pages/Menu/QuestionBank.vue";
 import Answer from "@/pages/Answer.vue";
+import Sort from "@/pages/Sort.vue";
+import CreateCourse from "@/pages/Menu/InnerViews/CreateCourse.vue";
+import CourseInfo from "@/pages/Menu/InnerViews/CourseInfo.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -61,6 +64,10 @@ const router = createRouter({
             component: BBG
         },
         {
+            path: '/Sort',
+            component: Sort
+        },
+        {
             path: '/Login',
             component: Login
         },
@@ -86,7 +93,7 @@ const router = createRouter({
                 },
                 {
                     path: '/Menu/Courses',
-                    component: Courses
+                    component: Courses,
                 },
                 {
                     path: '/Menu/Announcements',
@@ -103,6 +110,14 @@ const router = createRouter({
                 {
                     path: '',
                     redirect: '/Menu/Users'
+                },
+                {
+                    path: '/Menu/InnerViews/CreateCourse',
+                    component: CreateCourse
+                },
+                {
+                    path: '/Menu/InnerViews/CourseInfo',
+                    component: CourseInfo
                 },
             ]
         },

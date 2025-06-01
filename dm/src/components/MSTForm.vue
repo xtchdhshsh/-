@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, onMounted, defineEmits } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import axios from "@/utlis/axios";
 
 const emit = defineEmits(["getInputForm", "getResponse", "lujingUpdated", "startAutoPlay"]); 

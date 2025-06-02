@@ -12,10 +12,8 @@ import Login from "@/pages/Login.vue";
 import Register from "@/pages/Register.vue";
 import Profile from "@/pages/Profile.vue";
 import Students from '@/pages/Menu/Students.vue';
-import Teachers from '@/pages/Menu/Teachers.vue';
 import Users from '@/pages/Menu/Users.vue';
 import Courses from '@/pages/Menu/Courses.vue';
-import Announcements from '@/pages/Menu/Announcements.vue';
 import Submission from "@/pages/Menu/Submission.vue";
 import QuestionBank from "@/pages/Menu/QuestionBank.vue";
 import Answer from "@/pages/Answer.vue";
@@ -84,20 +82,12 @@ const router = createRouter({
                     component: Students
                 },
                 {
-                    path: '/Menu/Teachers',
-                    component: Teachers
-                },
-                {
                     path: '/Menu/Users',
                     component: Users
                 },
                 {
                     path: '/Menu/Courses',
                     component: Courses,
-                },
-                {
-                    path: '/Menu/Announcements',
-                    component: Announcements
                 },
                 {
                     path: '/Menu/QuestionBank',

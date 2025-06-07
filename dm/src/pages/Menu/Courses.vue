@@ -193,7 +193,7 @@ onMounted(() => {
       正在删除班级：<strong style="color: red; font-size: 18px;">{{ currentClassToDelete }}</strong>
     </div>
     <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
-      <el-input v-model="captchaInput" placeholder="输入验证码" maxlength="5" />
+      <el-input v-model="captchaInput" placeholder="输入验证码" maxlength="10" />
       <img
         :src="captchaImageUrl"
         @click="requestCaptcha"

@@ -32,16 +32,29 @@ const fetchStudents = async () => {
     })
 
     // console.log(res.data)
-    
-    const rawData = res.data || []
+    // console.log(typeof res.data)
 
-    students.value = rawData.map((stu) => ({
-      id: stu,
-      name: stu,
-      class: selectedClass.value,
-      course: selectedClass.value
-    }))
+    if (typeof res.data === 'object') {
+      students.value = []
+      return
+    } else if (typeof res.data === 'string') {
+      const rawData = res.data
+        .replace(/[\[\]]/g, '') // 去掉所有中括号
+        .split(',')             // 拆成 ["2024", "黄", "2022", "陈"]
+        .reduce((acc, val, i, arr) => {
+          if (i % 2 === 0) {
+            acc.push([val.trim(), arr[i + 1].trim()])
+          }
+          return acc
+        }, [])
 
+      students.value = rawData.map(([id, name]) => ({
+        id,
+        name,
+        class: selectedClass.value,
+        course: selectedClass.value
+      }))
+    }
   } catch (err) {
     // console.log(err)
     ElMessage.error('获取学生列表失败')
@@ -49,43 +62,52 @@ const fetchStudents = async () => {
 }
 
 // 添加学生
-const joinCourse = async () => {
-  if (!studentName.value.trim()) {
-    ElMessage.warning('请填写学生学号')
-    return
-  }
+// const joinCourse = async () => {
+//   if (!studentName.value.trim()) {
+//     ElMessage.warning('请填写学生学号')
+//     return
+//   }
 
-  try {
-    const res = await axios.post('/addstudent', null, {
-      headers: { token: localStorage.getItem('token') },
-      params: {
-        classname: selectedCourse.value,
-        studentname: studentName.value,
-        cl: selectedClass.value
-      }
-    })
-    if (res.data === 'success') {
-      ElMessage.success(`学生 ${studentName.value} 加入 ${selectedClass.value + '-' + selectedCourse.value} 成功`)
-      studentName.value = ''
-      await fetchStudents()
-    } else {
-      ElMessage.error(res.data || '添加学生失败')
-    }
-  } catch (err) {
-    ElMessage.error('添加学生请求出错')
-  }
-}
+//   try {
+//     const res = await axios.post('/addstudent', null, {
+//       headers: { token: localStorage.getItem('token') },
+//       params: {
+//         classname: selectedCourse.value,
+//         studentname: studentName.value,
+//         cl: selectedClass.value
+//       }
+//     })
+//     if (res.data === 'success') {
+//       ElMessage.success(`学生 ${studentName.value} 加入 ${selectedClass.value + '-' + selectedCourse.value} 成功`)
+//       studentName.value = ''
+//       await fetchStudents()
+//     } else {
+//       ElMessage.error(res.data || '添加学生失败')
+//     }
+//   } catch (err) {
+//     ElMessage.error('添加学生请求出错')
+//   }
+// }
 
-// 删除学生
-// HACK: 还没有相关接口
+
 const deleteStudent = async (student) => {
+  // console.log(student)
   try {
     const confirmed = window.confirm(`确定要删除学生 ${student.name} 吗？`)
     if (!confirmed) {
       return
     }
 
-    const res = await axios.post()
+    const params = new URLSearchParams()
+    params.append('classname', selectedCourse.value)
+    params.append('cl', selectedClass.value)
+    params.append('studentname', student.id)
+
+    const res = await axios.post('/delstudent', params, {
+      headers: { token: localStorage.getItem('token') }
+    })
+    
+    // console.log(res.data)
 
     if (res.data === 'success') {
       ElMessage.success('删除成功')
@@ -125,14 +147,14 @@ onMounted(() => {
       当前班级：<strong style="color: #409EFF; font-size: 24px;">{{ selectedClass + '-' + selectedCourse }}</strong>
     </p>
 
-    <div style="display: flex; gap: 12px;">
+    <!-- <div style="display: flex; gap: 12px;">
       <el-form-item label="学生学号">
         <el-input v-model="studentName" placeholder="请输入学生学号" />
       </el-form-item>
       <el-form-item>
         <el-button type="success" @click="joinCourse">添加学生</el-button>
       </el-form-item>
-    </div>
+    </div> -->
 
     <el-table :data="students" border stripe style="width: 100%; max-width: 1200px;">
         <el-table-column prop="name" label="姓名" />

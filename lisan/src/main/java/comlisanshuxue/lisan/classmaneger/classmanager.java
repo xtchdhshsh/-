@@ -26,9 +26,12 @@ public class classmanager {
     @RequestMapping("/addclass")
     public String addclass(@RequestHeader("token") String token, String classname,String cl){
         String teacher = JWTUtils.getUsername(token);
-        int re = classmapper.addclass(classname,teacher,cl);
-        if(re==1) return "success";
-        else return "fail";
+        try{
+            int re = classmapper.addclass(classname,teacher,cl);
+        }catch (Exception e){
+            return "班级重复";
+        }
+        return "success";
     }
 
     @RequestMapping("/getclass")
@@ -54,9 +57,12 @@ public class classmanager {
     @RequestMapping("/addstudent")
     public String addstudent(String classname,String studentname,@RequestHeader("token") String token, String cl){
         String teacher = JWTUtils.getUsername(token);
-        int re = classmapper.addstudent(classname,studentname,teacher,cl);
-        if(re==1) return "success";
-        else return "fail";
+        try {
+            int re = classmapper.addstudent(classname, studentname, teacher, cl);
+        } catch (Exception e) {
+            return "fail";
+        }
+        return "success";
     }
     @RequestMapping("/getstudent")
     public String getstudent(String classname,@RequestHeader("token") String token, String cl){
@@ -97,15 +103,26 @@ public class classmanager {
 
         String classname = sheet.getRow(3).getCell(4).getStringCellValue();
 
-        classmapper.addclass(classname,teacher,cl);
-
+        try {
+            classmapper.addclass(classname, teacher, cl);
+        } catch (Exception e) {
+            System.out.println("班级重复");
+        }
         for (int row = 5; row < maxRow; row++) {
             Row currentRow = sheet.getRow(row);
             String studentnum = currentRow.getCell(1).getStringCellValue();
             String studentname = currentRow.getCell(2).getStringCellValue();
             String studentcl = currentRow.getCell(3).getStringCellValue();
-            classmapper.addstudent(classname,studentnum,teacher,cl);
-            usermapper.newregister(studentname,studentnum,studentcl);
+            try {
+                classmapper.addstudent(classname,studentnum,teacher,cl);
+            } catch (Exception e) {
+                System.out.println("学生重复");
+            }
+            try {
+                usermapper.newregister(studentname,studentnum,studentcl);
+            } catch (Exception e) {
+                System.out.println("用户重复");
+            }
         }
         return "success";
     }

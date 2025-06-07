@@ -152,7 +152,7 @@ onMounted(() => {
               :loading="loadingMap[row.classname]"
               @click="() => { 
                 currentClassToDelete = row.clname + '-' + row.classname; 
-                requestCaptcha; 
+                requestCaptcha(); 
               }"
             >
               删除

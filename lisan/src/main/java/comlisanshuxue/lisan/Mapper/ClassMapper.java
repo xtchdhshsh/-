@@ -23,7 +23,10 @@ public interface ClassMapper {
     @Insert("insert into class_student(classname,studentname,teachername,class) values(#{classname},#{studentname},#{teacher},#{cl})")
     public int addstudent(@Param("classname") String classname,@Param("studentname") String studentname,@Param("teacher") String teacher,@Param("cl") String cl);
 
-    @Select("Select studentname from class_student where classname = #{classname} and teachername = #{teacher} and class = #{cl}")
+//    @Select("Select studentname from class_student where classname = #{classname} and teachername = #{teacher} and class = #{cl}")
+//    public List<Map<String,String>> getstudent(@Param("classname") String classname,@Param("teacher") String teacher,@Param("cl") String cl);
+
+    @Select("Select username,realname from user where username in (Select studentname from class_student where classname = #{classname} and teachername = #{teacher} and class = #{cl})")
     public List<Map<String,String>> getstudent(@Param("classname") String classname,@Param("teacher") String teacher,@Param("cl") String cl);
 
     @Delete("delete from class_student where classname = #{classname} and studentname = #{studentname} and teachername = #{teacher} and class = #{cl}")

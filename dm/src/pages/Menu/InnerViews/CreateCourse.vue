@@ -80,7 +80,7 @@ const uploadExcel = async (options) => {
 
     <h2>新建班级</h2>
 
-    <el-radio-group v-model="mode" style="margin-bottom: 20px;">
+    <el-radio-group v-model="mode" style="margin-bottom: 30px;">
       <el-radio-button :value="'manual'">手工录入</el-radio-button>
       <el-radio-button :value="'excel'">批量导入</el-radio-button>
     </el-radio-group>

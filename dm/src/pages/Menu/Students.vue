@@ -16,12 +16,30 @@ const getExperiments = async () => {
     const res = await axios.get('/getexperiment', {
       headers: { token: localStorage.getItem('token') }
     })
-    console.log(res.data);
-    
-    courses.value = res.data || []
+
+    let raw = res.data
+
+    if (typeof raw === 'string' && raw.startsWith('[') && raw.endsWith(']')) {
+      courses.value = raw.slice(1, -1).split(',').map((s, i) => ({
+        id: i + 1,
+        name: s.trim()
+      }))
+    } else if (Array.isArray(raw)) {
+      courses.value = raw
+    } else {
+      courses.value = []
+    }
   } catch (error) {
     console.error('获取实验列表失败:', error)
   }
+}
+
+const enterExperiment = (experiment) => {
+  router.push({
+    path: '/Menu/InnerViews/Experiment',
+    query: { experiment }
+  })
+  console.log(experiment);
 }
 
 onMounted(() => {
@@ -48,7 +66,7 @@ onMounted(() => {
 
       <el-table-column label="操作">
         <template #default="{ row }">
-          <el-button type="primary">进入</el-button>
+          <el-button type="primary" @click="enterExperiment(row.name)">进入</el-button>
         </template>
       </el-table-column>
     </el-table>

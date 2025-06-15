@@ -11,7 +11,9 @@ const loading = ref(false)
 const form = ref({
   username: localStorage.getItem('savedUsername') || '',
   // password: localStorage.getItem('savedPassword') || '',
-  remember: localStorage.getItem('rememberPassword') === 'true',
+  remember: localStorage.getItem('rememberPassword') !== null 
+            ? localStorage.getItem('rememberPassword') === 'true' 
+            : true,
   userType: localStorage.getItem('savedUserType') || 'student'
 })
 

@@ -20,6 +20,7 @@ import Answer from "@/pages/Answer.vue";
 import Sort from "@/pages/Sort.vue";
 import CreateCourse from "@/pages/Menu/InnerViews/CreateCourse.vue";
 import CourseInfo from "@/pages/Menu/InnerViews/CourseInfo.vue";
+import Experiment from "@/pages/Menu/InnerViews/Experiment.vue"
 
 const router = createRouter({
     history: createWebHistory(),
@@ -108,6 +109,10 @@ const router = createRouter({
                 {
                     path: '/Menu/InnerViews/CourseInfo',
                     component: CourseInfo
+                },
+                {
+                    path: '/Menu/InnerViews/Experiment',
+                    component: Experiment
                 },
             ]
         },

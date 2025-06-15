@@ -70,7 +70,6 @@ const confirmDelete = async () => {
   }
 }
 
-
 // 修改班级名称
 const editClassName = async (clname, classname) => {
   const newclassname = window.prompt('请输入新的课程名称：', classname)

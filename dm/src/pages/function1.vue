@@ -31,7 +31,7 @@
 
     <!-- ① 题型选择弹窗 -->
     <el-dialog v-model="typeDialogVisible" title="选择题型" width="320px" :close-on-click-modal="false">
-      <el-radio-group v-model="questionType" style="display:flex;flex-direction:column;gap:8px;">
+      <el-radio-group v-model="questionType" style="display:flex;flex-direction:row;">
         <el-radio label="fill">填空题</el-radio>
         <el-radio label="choice">选择题</el-radio>
       </el-radio-group>
@@ -110,7 +110,7 @@ const questionType      = ref('fill')
 const fillDialogVisible = ref(false)
 const editableData      = ref([])
 const blanks            = ref(new Set())       // 用于填空
-const blankOrder        = ref([])              // 顺序数组，用于选择题
+const blankOrder        = ref([])        // 顺序数组，用于选择题
 
 /**************** 工具函数 ****************/
 const keyOf = (r,c)=>`${r}-${c}`
@@ -184,18 +184,20 @@ const qrUrl=ref('')
 
 async function saveFill(){
   if(!blanks.value.size){ElMessage.info('请至少挖一个空');return}
+  const type = '真值表'
   const payload={
     type:'fill',
     headers:tableHeaders.value,
     data:editableData.value.map((row,r)=>row.map((cell,c)=>blanks.value.has(keyOf(r,c))?null:cell))
   }
-  await send(payload)
+  await send(payload, type)
 }
 
 async function saveChoice(){
   if(!blankOrder.value.length){ElMessage.info('请选择要作为答案的格子');return}
   const options=buildChoiceOptions()
   if(options.length<4){ElMessage.error('生成选项失败');return}
+  const type = '真值表'
   const payload={
     type:'choice',
     headers:tableHeaders.value,
@@ -203,12 +205,16 @@ async function saveChoice(){
     blanks:blankOrder.value,   // 记录顺序格子
     options
   }
-  await send(payload)
+  await send(payload, type)
 }
 
-async function send(payload){
+async function send(payload, type){
   try{
-    const {data:id}=await axios.post('/api/share',payload)
+    const body = {
+      type: type,
+      content: JSON.stringify(payload)
+    }
+    const {data:id}=await axios.post('/api/share',body)
     if(!id) throw new Error('无效id')
     qrUrl.value=`${window.location.origin}/answer/${id}`
     fillDialogVisible.value=false

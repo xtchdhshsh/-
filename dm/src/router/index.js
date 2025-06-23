@@ -18,7 +18,6 @@ import Courses from '@/pages/Menu/Courses.vue'
 import Announcements from '@/pages/Menu/Announcements.vue'
 import Submission from "@/pages/Menu/Submission.vue";
 import QuestionBank from "@/pages/Menu/QuestionBank.vue";
-import Answer from "@/pages/Answer.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -59,6 +58,10 @@ const router = createRouter({
         {
             path: '/BBG',
             component: BBG
+        },
+        {
+            path: '/Sort',
+            component: () => import('@/pages/Sort.vue')
         },
         {
             path: '/Login',
@@ -111,6 +114,41 @@ const router = createRouter({
             name: 'Answer',
             component: () => import('@/pages/Answer.vue') 
         },
+        {
+            path: '/answerSat/:id',
+            name: 'AnswerSat',
+            component: () => import('@/pages/AnswerSat.vue')
+        },
+        {
+            path: '/answerWarshall/:id',
+            name: 'AnswerWarshall',
+            component: () => import('@/pages/AnswerWarshall.vue')
+        },
+        {
+            path: '/answerDijkstra/:id',
+            name: 'AnswerDijkstra',
+            component: () => import('@/pages/AnswerDijkstra.vue')
+        },
+        {
+            path: '/answerMST/:id',
+            name: 'AnswerMST',
+            component: () => import('@/pages/AnswerMST.vue')
+        },
+        {
+            path: '/answerHuffman/:id',
+            name: 'AnswerHuffman',
+            component: () => import('@/pages/AnswerHuffman.vue')
+        },
+        {
+            path: '/answerBipartite/:id',
+            name: 'AnswerBipartite',
+            component: () => import('@/pages/AnswerBBG.vue')
+        },
+        {
+            path: '/answerSorting/:id',
+            name: 'AnswerSorting',
+            component: () => import('@/pages/AnswerSorting.vue')
+        }
     ]
 })
 

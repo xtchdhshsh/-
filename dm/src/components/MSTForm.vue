@@ -1,6 +1,9 @@
 <script setup>
 import { reactive, ref, onMounted, defineEmits } from "vue";
 import axios from "@/utlis/axios";
+import QrcodeVue     from 'qrcode.vue'
+import { ElMessage } from 'element-plus'
+
 
 const emit = defineEmits(["getInputForm", "getResponse", "lujingUpdated", "startAutoPlay"]); 
 // 新增 "startAutoPlay" 事件
@@ -23,6 +26,13 @@ const showNode = (n) => {
     inputForm.node.push(String.fromCharCode(65 + i));
   }
 };
+
+/* ---------- 二维码弹窗 ---------- */
+const qrVisible = ref(false)
+const qrUrl     = ref('')
+
+/* ---------- 新建题目 ---------- */
+
 
 // 当节点信息手动改动时
 function changeNode(value) {
@@ -148,11 +158,39 @@ function addEdge() {
   newEdgeForm.weight = 1;
 }
 
+async function createQuestion () {
+  // ① 判断变量改成 LJ
+  if (!LJ || LJ.length === 0) {
+    ElMessage.warning('请先点击 “生成” 并查看最小生成树结果')
+    return
+  }
+
+  try {
+    const { data: id } = await axios.post('/api/share', {
+      type   : 'mst',
+      content: JSON.stringify({
+        count : inputForm.count,
+        node  : inputForm.node,
+        link  : inputForm.edges.map(e => [e.node1, e.node2, e.weight]),
+        mst   : LJ              // ② 把 LJ 存进去
+      })
+    })
+
+    qrUrl.value   = `${window.location.origin}/answerMST/${id}`
+    qrVisible.value = true
+    ElMessage.success('题目创建成功！')
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('新建题目失败')
+  }
+}
+
 onMounted(() => {
   // 节点信息初始化
   inputForm.count = minCount;
   showNode(minCount);
 });
+
 </script>
 
 <template>
@@ -242,7 +280,18 @@ onMounted(() => {
         <el-button type="primary" @click="startAlgorithm">
           开始
         </el-button>
+        <el-button type="success" @click="createQuestion">
+          新建题目
+        </el-button>
       </el-form-item>
+      <el-dialog v-model="qrVisible" title="题目二维码"
+                 width="320px" :close-on-click-modal="false">
+        <div style="display:flex;flex-direction:column;
+              align-items:center;gap:12px;">
+          <qrcode-vue :value="qrUrl" :size="260" />
+          <p style="word-break:break-all;text-align:center;">{{ qrUrl }}</p>
+        </div>
+      </el-dialog>
     </div>
   </el-form>
 </template>

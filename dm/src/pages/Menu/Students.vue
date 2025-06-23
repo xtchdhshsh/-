@@ -1,64 +1,74 @@
 <script setup>
-import { ref, inject, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from '@/utlis/axios'
+import { useRoute, useRouter } from 'vue-router'
 
-const classOptions = inject('courses')
+const route = useRoute()
+const router = useRouter()
 
-const students = ref([])
-const selectedClass = ref('')
+// 数据
+const courses = ref([])
+const selectedClasses = ref([])
 
-// 获取学生数据
-const fetchStudents = async () => {
-  if (!selectedClass.value) {
-    students.value = []
-    return
-  }
-
+// 请求实验列表
+const getExperiments = async () => {
   try {
-    const res = await axios.post(`/getstudent?classname=${encodeURIComponent(selectedClass.value)}`, {}, {
+    const res = await axios.get('/getexperiment', {
       headers: { token: localStorage.getItem('token') }
     })
-    const rawData = res.data || []
 
-    students.value = rawData.map((stu) => ({
-      id: stu,
-      name: stu,
-      class: selectedClass.value,
-      course: selectedClass.value
-    }))
-  } catch (err) {
-    // console.error('拉取学生失败', err)
-    ElMessage.error('获取学生列表失败')
+    let raw = res.data
+
+    if (typeof raw === 'string' && raw.startsWith('[') && raw.endsWith(']')) {
+      courses.value = raw.slice(1, -1).split(',').map((s, i) => ({
+        id: i + 1,
+        name: s.trim()
+      }))
+    } else if (Array.isArray(raw)) {
+      courses.value = raw
+    } else {
+      courses.value = []
+    }
+  } catch (error) {
+    console.error('获取实验列表失败:', error)
   }
 }
 
-watch(selectedClass, () => {
-  fetchStudents()
+const enterExperiment = (experiment) => {
+  router.push({
+    path: '/Menu/InnerViews/Experiment',
+    query: { experiment }
+  })
+  console.log(experiment);
+}
+
+onMounted(() => {
+  getExperiments()
 })
 </script>
 
 <template>
   <div class="page">
-    <h2>学生信息管理</h2>
+    <h2>学生实验管理</h2>
 
-    <el-form style="margin-bottom: 20px;">
-      <el-form-item label="班级">
-        <el-select v-model="selectedClass" placeholder="请选择班级" style="width: 240px;">
-          <el-option
-            v-for="cls in classOptions"
-            :key="cls.name"
-            :label="cls.name"
-            :value="cls.name"
-          />
-        </el-select>
-      </el-form-item>
-    </el-form>
+    <el-table 
+      :data="courses"
+      row-key="id"
+      border 
+      style="margin-top: 20px"
+      @selection-change="val => (selectedClasses.value = val)"
+    >
+      <el-table-column type="selection" width="45" />
 
-    <el-table :data="students" border stripe>
-      <el-table-column prop="id" label="学号" />
-      <el-table-column prop="name" label="姓名" />
-      <el-table-column prop="class" label="班级" />
-      <el-table-column prop="course" label="课程" />
+      <el-table-column type="index" label="序号" width="55" />
+
+      <el-table-column prop="name" label="实验名称" />
+
+      <el-table-column label="操作">
+        <template #default="{ row }">
+          <el-button type="primary" @click="enterExperiment(row.name)">进入</el-button>
+        </template>
+      </el-table-column>
     </el-table>
   </div>
 </template>
@@ -66,9 +76,10 @@ watch(selectedClass, () => {
 <style scoped>
 .page {
   padding: 0 20px;
+  max-width: 1200px;
 }
 h2 {
-  padding-bottom: 16px;
   font-size: 32px;
+  margin-bottom: 22px;
 }
 </style>

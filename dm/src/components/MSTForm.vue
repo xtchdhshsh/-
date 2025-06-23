@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, ref, onMounted, defineEmits } from "vue";
+import { reactive, ref, onMounted } from "vue";
 import axios from "@/utlis/axios";
 import QrcodeVue     from 'qrcode.vue'
 import { ElMessage } from 'element-plus'

@@ -39,7 +39,9 @@ const swapHistory = ref([])
 let sortingGenerator = null    
 const mergeSortInfo = ref([])  // 归并排序文字解释
 
+
 const algoName = computed(()=> algorithms.find(a=>a.value===selectedAlgorithm.value)?.name || selectedAlgorithm.value)
+
 
 // 生成随机数组
 function generateArray(size) {
@@ -333,6 +335,7 @@ const sortingAlgorithms = {
   }
 }
 
+
 /* 若数组为空则不给出题 */
 function tryOpenCreateDialog () {
   if (!array.value.length) {
@@ -431,10 +434,10 @@ async function createQuestion () {
         <el-button type="info" size="small" @click="resetArray" :disabled="false">重置</el-button>
         <el-button type="success" size="small" @click="pauseSorting" :disabled="!isSorting || isPaused">暂停</el-button>
         <el-button type="success" size="small" @click="resumeSorting" :disabled="!isSorting || !isPaused">继续</el-button>
-
          <el-button type="success"  size="small" @click="tryOpenCreateDialog" :disabled="isSorting">
           新建题目
         </el-button>
+
       </div>
     </div>
 

@@ -1,6 +1,8 @@
 <script setup>
 import { reactive, ref, onMounted } from "vue";
 import axios from "@/utlis/axios";
+import QrcodeVue from 'qrcode.vue'
+import { ElMessage } from 'element-plus';
 
 const emit = defineEmits(["getInputForm", "getResponse", "updateMatchingType"]);
 const minCount = 2;
@@ -49,6 +51,12 @@ const rules = reactive({
   count1: [{ required: true, message: "请设置第一个节点集个数" }],
   count2: [{ required: true, message: "请设置第二个节点集个数" }],
 });
+
+const qrVisible = ref(false);
+const qrUrl = ref("");
+
+const matchDialogVisible = ref(false)            // 是否显示弹窗
+const matchType = ref('maximum')   // 选中的匹配类型
 
 // ========== 2) 初始化两个节点集 ==========
 // 示例：都从 'A' 开始，后续 B、C...
@@ -161,6 +169,54 @@ function resetForm(ruleForm) {
   newEdgeForm.weight = 1;
 }
 
+function openMatchDialog() {
+  if (inputForm.edges.length === 0) {
+    ElMessage.info('请先添加至少一条边'); return;
+  }
+  matchDialogVisible.value = true
+}
+
+async function confirmMatchType() {
+  matchDialogVisible.value = false
+  await createQuestion()          // 走你原来的逻辑
+}
+
+
+async function createQuestion() {
+  /* 基本校验 —— 至少有一条边 */
+  if (inputForm.edges.length === 0) {
+    ElMessage.warning("请先添加至少一条边再生成题目");
+    return;
+  }
+
+  const suffixl = 'L_';
+  const suffixr = 'R_';
+  const node1 = inputForm.node1.map(n => suffixl + n);
+  const node2 = inputForm.node2.map(n => suffixr + n);
+  /* 打包题目内容 */
+  const payload = {
+    matchType: matchType,
+    count1: inputForm.count1,
+    count2: inputForm.count2,
+    node1: node1,
+    node2: node2,
+    edges: inputForm.edges.map(e => ['L_' + e.node1, 'R_' + e.node2])   // [['A','C'], …]
+  };
+
+  try {
+    const { data: id } = await axios.post('/api/share', {
+      type: 'bipartite',
+      content: JSON.stringify(payload)
+    })
+    qrUrl.value = `${window.location.origin}/answerBipartite/${id}`
+    qrVisible.value = true
+    ElMessage.success('题目创建成功！')
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('新建题目失败')
+  }
+}
+
 onMounted(() => {
   showNode1(inputForm.count1);
   showNode2(inputForm.count2);
@@ -173,22 +229,12 @@ onMounted(() => {
     <el-row :gutter="20">
       <el-col :span="12">
         <el-form-item label="节点集1个数" prop="count1">
-          <el-input-number
-            v-model="inputForm.count1"
-            :min="minCount"
-            :max="10"
-            @change="showNode1"
-          />
+          <el-input-number v-model="inputForm.count1" :min="minCount" :max="10" @change="showNode1" />
         </el-form-item>
       </el-col>
       <el-col :span="12">
         <el-form-item label="节点集2个数" prop="count2">
-          <el-input-number
-            v-model="inputForm.count2"
-            :min="minCount"
-            :max="10"
-            @change="showNode2"
-          />
+          <el-input-number v-model="inputForm.count2" :min="minCount" :max="10" @change="showNode2" />
         </el-form-item>
       </el-col>
     </el-row>
@@ -203,31 +249,13 @@ onMounted(() => {
 
     <div class="add-edge-inline">
       <span>起点(集1)</span>
-      <el-select
-        v-model="newEdgeForm.node1"
-        placeholder="起点"
-        style="width: 70px"
-      >
-        <el-option
-          v-for="(n, idx) in inputForm.node1"
-          :key="idx"
-          :label="n"
-          :value="n"
-        />
+      <el-select v-model="newEdgeForm.node1" placeholder="起点" style="width: 70px">
+        <el-option v-for="(n, idx) in inputForm.node1" :key="idx" :label="n" :value="n" />
       </el-select>
 
       <span>终点(集2)</span>
-      <el-select
-        v-model="newEdgeForm.node2"
-        placeholder="终点"
-        style="width: 70px"
-      >
-        <el-option
-          v-for="(n, idx) in inputForm.node2"
-          :key="idx"
-          :label="n"
-          :value="n"
-        />
+      <el-select v-model="newEdgeForm.node2" placeholder="终点" style="width: 70px">
+        <el-option v-for="(n, idx) in inputForm.node2" :key="idx" :label="n" :value="n" />
       </el-select>
 
       <el-button type="primary" @click="addEdge"> 添加 </el-button>
@@ -235,11 +263,7 @@ onMounted(() => {
 
     <!-- 已添加的边 -->
     <div class="edges-list">
-      <div
-        v-for="(edge, index) in inputForm.edges"
-        :key="index"
-        class="edge-item"
-      >
+      <div v-for="(edge, index) in inputForm.edges" :key="index" class="edge-item">
         <span class="edge-text"> {{ edge.node1 }} - {{ edge.node2 }} </span>
         <el-button type="danger" size="small" @click="removeEdge(index)">
           删除
@@ -261,8 +285,31 @@ onMounted(() => {
       <el-form-item>
         <el-button @click="PM" type="success">完备匹配</el-button>
       </el-form-item>
+
+      <el-button type="success" @click="openMatchDialog">
+        新建题目
+      </el-button>
     </div>
   </el-form>
+  <el-dialog v-model="qrVisible" title="题目二维码" width="320px" :close-on-click-modal="false">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+      <qrcode-vue :value="qrUrl" :size="260" />
+      <p style="word-break:break-all;text-align:center;">{{ qrUrl }}</p>
+    </div>
+  </el-dialog>
+  <el-dialog v-model="matchDialogVisible" title="选择匹配类型" width="320px" :close-on-click-modal="false">
+
+    <!--   label 一律用 :label 绑定，确保是字符串   -->
+    <el-radio-group v-model="matchType" style="display:flex;">
+      <el-radio :label="'maximum'">最大匹配</el-radio>
+      <el-radio :label="'perfect'">完备匹配</el-radio>
+    </el-radio-group>
+
+    <template #footer>
+      <el-button @click="matchDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="confirmMatchType">下一步</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -282,7 +329,8 @@ onMounted(() => {
 
 /* 列表容器 - 固定高度 + overflow auto */
 .edges-list {
-  max-height: 70px; /* 可自行调整 */
+  max-height: 70px;
+  /* 可自行调整 */
   overflow-y: auto;
   display: grid;
   grid-template-columns: 1fr 1fr;

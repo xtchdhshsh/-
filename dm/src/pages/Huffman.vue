@@ -2,18 +2,22 @@
 import * as echarts from 'echarts';
 import { reactive, ref, onMounted } from 'vue';
 import axios from '@/utlis/axios';
+import QrcodeVue from 'qrcode.vue'
 
 const TIME_PERSTEP = 1000; // 每一步的时间
 
 let num = 0;
 const ruleForm = ref();
-let inputForm = reactive({string: '', strArr: [],wordStat:  false, spaceStat: true, othersStat: true});
-const rules = reactive({string:[{required: true, message: '请输入数据', trigger: 'blur'}]});
+let inputForm = reactive({ string: '', strArr: [], wordStat: false, spaceStat: true, othersStat: true });
+const rules = reactive({ string: [{ required: true, message: '请输入数据', trigger: 'blur' }] });
 let currentStep = ref(-1);
 let process = new Array();
 const outputTable = reactive([]);
 let WPL = ref();
 let chart;
+
+const qrVisible = ref(false)
+const qrUrl = ref('')
 // 根节点或叶子节点的标签样式
 let specialLabelRich = {
     align: 'center', // 文字对齐
@@ -39,19 +43,19 @@ let data = {
 };
 let option = {
     // 工具栏
-    toolbox:{
+    toolbox: {
         show: true,
         itemSize: 20, // icon大小
         itemGap: 20, // icon间隔
         top: '1%',
-        right:'1%',
+        right: '1%',
         feature: {
             // 上一步
             myBack: {
                 title: 'back',
                 icon: 'path://M669.6 849.6c8.8 8 22.4 7.2 30.4-1.6s7.2-22.4-1.6-30.4l-309.6-280c-8-7.2-8-17.6 0-24.8l309.6-270.4c8.8-8 9.6-21.6 2.4-30.4-8-8.8-21.6-9.6-30.4-2.4L360.8 480.8c-27.2 24-28 64-0.8 88.8l309.6 280z',
                 onclick: () => {
-                    if(currentStep.value > 0) {
+                    if (currentStep.value > 0) {
                         drawProcess(--currentStep.value);
                     }
                 }
@@ -61,8 +65,8 @@ let option = {
                 title: 'next',
                 icon: 'path://M642.174 504.594c7.99 7.241 7.897 17.58-0.334 24.782L332.62 799.945c-8.867 7.759-9.766 21.236-2.007 30.103 7.758 8.867 21.236 9.766 30.103 2.007l309.221-270.569c27.429-24 27.792-64.127 0.89-88.507L360.992 192.192c-8.73-7.912-22.221-7.248-30.133 1.482-7.912 8.73-7.248 22.222 1.482 30.134l309.833 280.786z',
                 onclick: () => {
-                    if(currentStep.value < num - 1) { 
-                        drawProcess(++currentStep.value); 
+                    if (currentStep.value < num - 1) {
+                        drawProcess(++currentStep.value);
                     }
                 }
             },
@@ -79,30 +83,30 @@ let option = {
             },
             saveAsImage: {
                 show: true,
-                type:'png',
+                type: 'png',
                 name: 'download',
-                title:'save',
+                title: 'save',
             },
         },
     },
     tooltip: {
         trigger: 'item',
         triggerOn: 'mousemove',
-        formatter: function(params){
+        formatter: function (params) {
             let tip = '';
-            if(params){
-                if(!params.data.children){
+            if (params) {
+                if (!params.data.children) {
                     tip += params.marker + '字符：' + params.name + '<br/>';
                     tip += params.marker + '权重：' + params.value + '<br/>';
                     // Huffman编码
-                    if(currentStep.value == num - 1){
-                        for(let i = 0; i < num; i++) {
-                            if(params.name == outputTable[i].name){
+                    if (currentStep.value == num - 1) {
+                        for (let i = 0; i < num; i++) {
+                            if (params.name == outputTable[i].name) {
                                 tip += params.marker + '编码：' + outputTable[i].code;
                             }
                         }
                     }
-                } else if(params.name == 'Step'){
+                } else if (params.name == 'Step') {
                     tip += params.marker + '当前步骤：' + params.value;
                 }
             }
@@ -118,7 +122,7 @@ let option = {
         symbolSize: 40,
         edgeShape: 'polyline', // 折线
         initialTreeDepth: -1, // 初始展开层数，-1表示所有层
-        itemStyle:{ color: 'LightGrey' },
+        itemStyle: { color: 'LightGrey' },
         lineStyle: { width: 5 },
         label: {
             position: 'inside',
@@ -133,6 +137,37 @@ let option = {
     }
 };
 
+async function createQuestion() {
+    /* 先确保已经算出了最终编码结果 outputTable */
+    if (outputTable.length === 0) {
+        ElMessage.warning('请先完成一次运算，得到 Huffman 编码后再新建题目')
+        return
+    }
+
+    /* 1. 组装题目内容 —— 只发字符+权重和标准答案(编码) */
+    const payload = {
+        count: outputTable.length,
+        table: outputTable.map(row => ({ ch: row.name, w: +row.power })),   // 基础表
+        answer: outputTable.map(row => ({ ch: row.name, code: row.code }))   // 正确编码
+    }
+
+    try {
+        /* 2. 保存到后台，取回 id */
+        const { data: id } = await axios.post('/api/share', {
+            type: 'huffman',
+            content: JSON.stringify(payload)
+        })
+
+        /* 3. 成功 → 展示二维码 */
+        qrUrl.value = `${window.location.origin}/answerHuffman/${id}`
+        qrVisible.value = true
+        ElMessage.success('题目创建成功！')
+    } catch (e) {
+        console.error(e)
+        ElMessage.error('新建题目失败')
+    }
+}
+
 onMounted(() => {
     // ECharts 配置
     chart = echarts.init(document.querySelector('#huffmanTree'));
@@ -144,7 +179,7 @@ onMounted(() => {
 
 // 修改根节点或叶子节点的标签 
 const changeSpecialLabel = obj => {
-    const formatterArr = JSON.stringify(obj) == JSON.stringify(data) ? [ '{name|{b}}', '{value|{c}}' ] : [ '{value|{c}}', '{name|{b}}' ];
+    const formatterArr = JSON.stringify(obj) == JSON.stringify(data) ? ['{name|{b}}', '{value|{c}}'] : ['{value|{c}}', '{name|{b}}'];
     const color = JSON.stringify(obj) == JSON.stringify(data) ? '#F4606C' : 'LightSkyBlue';
     specialLabelRich.formatter = formatterArr.join('\n');
     specialLabelRich.rich.name.color = color;
@@ -153,41 +188,42 @@ const changeSpecialLabel = obj => {
 }
 
 // 修改outputTable单元格样式，先到先得原则
-const cellStyle = ({column, rowIndex}) => {
-    if (column.label === 'Huffman编码'){ return { 'text-align': 'center', color: '#F4606C' }}
-    if(column){ return { 'text-align': 'center' }}
+const cellStyle = ({ column, rowIndex }) => {
+    if (column.label === 'Huffman编码') { return { 'text-align': 'center', color: '#F4606C' } }
+    if (column) { return { 'text-align': 'center' } }
 }
 
 // 处理输入信息
 const transformInput = async () => {
-    if(inputForm.wordStat == false){
+    if (inputForm.wordStat == false) {
         // 输入为数组格式
-        inputForm.strArr = 
-            inputForm.string.replace(/[\r\n]/g,"").split(',').map(s => s = [...s.split(' ')]).map(arr => {
+        inputForm.strArr =
+            inputForm.string.replace(/[\r\n]/g, "").split(',').map(s => s = [...s.split(' ')]).map(arr => {
                 // 过滤因空格带来的元素
-                return arr.filter(chr => chr != '');})
-    }else{
+                return arr.filter(chr => chr != '');
+            })
+    } else {
         // 输入一段文字
         let strArr = [];
         const charJudge = [inputForm.spaceStat == true ? 'T' : 'F', inputForm.othersStat == true ? 'T' : 'F'].join("");
         // 纯字母、数字，只含空格，只忽略空格，全部字符四种情况
-        const judgeChar = s =>{
+        const judgeChar = s => {
             const regChar = /[A-Z]|[1-9]/;
-            switch(charJudge){
-                case 'FF': if(regChar.test(s)){ return true; } break;
-                case 'TF': if(regChar.test(s) || s == ' '){ return true; } break;
-                case 'FT': if(s != ' '){ return true } break;
+            switch (charJudge) {
+                case 'FF': if (regChar.test(s)) { return true; } break;
+                case 'TF': if (regChar.test(s) || s == ' ') { return true; } break;
+                case 'FT': if (s != ' ') { return true } break;
                 case 'TT': return true;
             }
             return false;
         }
         strArr = new Map();
-        for(let s of inputForm.string.replace(/[\r\n]/g,"").toUpperCase().split('')){ 
-            if(judgeChar(s)){ strArr.set(s, strArr.has(s) ? strArr.get(s) + 1 : 1); }
+        for (let s of inputForm.string.replace(/[\r\n]/g, "").toUpperCase().split('')) {
+            if (judgeChar(s)) { strArr.set(s, strArr.has(s) ? strArr.get(s) + 1 : 1); }
         }
-        inputForm.strArr = Array.from(strArr); 
+        inputForm.strArr = Array.from(strArr);
     }
-    num = inputForm.strArr.length; 
+    num = inputForm.strArr.length;
 }
 
 // 过程信息转换
@@ -225,7 +261,7 @@ const compute = async ruleForm => {
                 {
                     inputArr: inputForm.strArr.map(arr => arr.join("`")).join("~")
                 }
-            ).then( response => {
+            ).then(response => {
                 let { guocheng: processArr, bianma: outputTableArr, daiquanguocheng: WPLString } = response.data;
                 // 重置
                 currentStep.value = -1;
@@ -241,11 +277,11 @@ const compute = async ruleForm => {
                         drawProcess(i);
                         currentStep.value += 1;
                         // 输出表格
-                        if(i == num - 1){ 
+                        if (i == num - 1) {
                             outputTableArr = outputTableArr.split(" ").filter(arr => arr != '');
                             outputTableArr.forEach(str => {
                                 const [na, power, code] = str.split(":");
-                                outputTable.push({name: na, power: power, code: code});
+                                outputTable.push({ name: na, power: power, code: code });
                                 WPL.value = "WPL = " + WPLString;
                             });
                         }
@@ -263,81 +299,116 @@ const compute = async ruleForm => {
             <!-- 输入表单 -->
             <el-form ref="ruleForm" :model="inputForm" :rules="rules" class="inputArea">
                 <el-form-item prop="string">
-                    <el-input  v-model="inputForm.string" type="textarea" class="elTextarea" placeholder="请输入指定格式或一段文字" />
+                    <el-input v-model="inputForm.string" type="textarea" class="elTextarea"
+                        placeholder="请输入指定格式或一段文字" />
                 </el-form-item>
                 <el-form-item>
                     <div>
                         <p class="inputTip">格式如下：<br>A 28, B 36,<br>C 24, D 12</p>
-                        <el-form-item label="文字"><el-switch inline-prompt active-text="开启" inactive-text="关闭" v-model="inputForm.wordStat" /></el-form-item>
+                        <el-form-item label="文字"><el-switch inline-prompt active-text="开启" inactive-text="关闭"
+                                v-model="inputForm.wordStat" /></el-form-item>
                         <el-form-item label="非字母、数字字符："></el-form-item>
-                        <el-form-item label="空格"><el-switch inline-prompt active-text="统计" inactive-text="忽略" v-model="inputForm.spaceStat" /></el-form-item>
-                        <el-form-item label="其他"><el-switch inline-prompt active-text="统计" inactive-text="忽略" v-model="inputForm.othersStat" /></el-form-item>
-                        <el-button type="success" @click="compute(ruleForm)">开始运算</el-button>
+                        <el-form-item label="空格"><el-switch inline-prompt active-text="统计" inactive-text="忽略"
+                                v-model="inputForm.spaceStat" /></el-form-item>
+                        <el-form-item label="其他"><el-switch inline-prompt active-text="统计" inactive-text="忽略"
+                                v-model="inputForm.othersStat" /></el-form-item>
+                        <el-form-item label-width="0">
+                            <div class="btn-wrap">
+                                <el-button type="success" @click="compute(ruleForm)">开始运算</el-button>
+                                <el-button type="success" @click="createQuestion">新建题目</el-button>
+                            </div>
+                        </el-form-item>
                     </div>
                 </el-form-item>
+
             </el-form>
             <!-- 输出表格 -->
-            <el-table :data="outputTable" class="outputTable"
-            :header-cell-style="{'text-align':'center'}"
-            :cell-style="cellStyle">
+            <el-table :data="outputTable" class="outputTable" :header-cell-style="{ 'text-align': 'center' }"
+                :cell-style="cellStyle">
                 <el-table-column fixed prop="name" label="字符" width="100" />
                 <el-table-column prop="power" label="权重" width="100" />
                 <el-table-column prop="code" label="Huffman编码" style="width: 100%;" />
                 <template #append>
-                    <div class="WPL">{{WPL}}</div>
+                    <div class="WPL">{{ WPL }}</div>
                 </template>
             </el-table>
         </div>
         <!-- Huffman树演示 -->
         <div id="huffmanTree"></div>
+        <el-dialog v-model="qrVisible" title="题目二维码" width="320px" :close-on-click-modal="false">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+                <qrcode-vue :value="qrUrl" :size="260" />
+                <p style="word-break:break-all;text-align:center;">{{ qrUrl }}</p>
+            </div>
+        </el-dialog>
     </main>
 </template>
 
 <style scoped>
-main{
+main {
     display: flex;
     width: 1240px;
     margin: 0 auto;
 }
+
 .inputAndOutput {
     width: 350px;
     margin: 0 10px;
 }
-.inputArea{
+
+.inputArea {
     display: flex;
     border: 1px solid #666;
     border-radius: 8px;
     padding: 5px 10px;
 }
-.elTextarea{
+
+.elTextarea {
     width: 200px;
     margin: 10px;
     margin-left: 0;
 }
-:deep(.elTextarea textarea){
+
+:deep(.elTextarea textarea) {
     height: 240px;
     resize: none;
 }
-.inputTip{
+
+.inputTip {
     color: #19CAAD;
 }
-.outputTable{
+
+.outputTable {
     height: 300px;
     border: 1px solid #666;
     border-radius: 8px;
     margin-top: 10px;
 }
-.WPL{
+
+.WPL {
     width: 340px;
     font-size: 16px;
     margin: 5px;
     color: #F4606C;
     word-wrap: break-word;
 }
+
 #huffmanTree {
     width: 850px;
     height: 600px;
     border: 1px solid #666;
     border-radius: 8px;
+}
+
+.btn-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    align-items: flex-start;
+}
+
+.btn-wrap .el-button {
+    min-width: 100px;
 }
 </style>

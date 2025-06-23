@@ -1,6 +1,16 @@
 <script setup>
 import axios from '@/utlis/axios'
-import { onMounted } from 'vue';
+import { onMounted,ref } from 'vue';
+import { ElMessage } from 'element-plus';
+import QrcodeVue from 'qrcode.vue';
+
+const previewDialogVisible = ref(false)
+const qrDialogVisible = ref(false);
+
+const previewData = ref({ sets: { a: [], b: [], c: [] }, formula: '', answer: '' })
+const qrUrl = ref('')
+
+const studentAnswer = ref('')
 // 加载 d3
 onMounted(() => {
     const scriptD3 = document.createElement('script');
@@ -12,27 +22,6 @@ onMounted(() => {
     }
     document.body.appendChild(scriptD3);
 });
-
-//制作按钮
-// for(let i=9;i<=12;i++){
-//     const tipbutton = document.querySelector(`.tipbut:nth-child(${i})`)
-//     const formula = document.querySelector('.formula')
-//     tipbutton.addEventListener('click',() =>{
-//         // 获取当前光标位置
-//         const cursorPosition = formula.selectionStart;
-//         // 获取光标前后的文本
-//         const startText = formula.value.substring(0, cursorPosition);
-//         const endText = formula.value.substring(cursorPosition);
-//         const textToInsert=tipbutton.value
-//         formula.value = startText + textToInsert + endText;
-//         // formula.addEventListener('blur',()=>{
-//         //   formula.focus();
-//         // })
-//         //设置光标位置
-//         formula.setSelectionRange(cursorPosition + textToInsert.length, cursorPosition + textToInsert.length);
-//         // enter.value = enter.value + `${tipbutton.value}`
-//     })
-// }
 
 const tipbtn = value => {
     const formula = document.querySelector('.formula');
@@ -48,6 +37,12 @@ const tipbtn = value => {
     // })
     //设置光标位置
     formula.setSelectionRange(cursorPosition + textToInsert.length, cursorPosition + textToInsert.length);
+}
+
+// 读取集合输入的工具
+function readSet(selector) {
+  const v = document.querySelector(selector).value.trim()
+  return v === '' ? [] : v.split(',').map(Number)
 }
 
 //提交按钮 事件监听
@@ -79,7 +74,6 @@ const submitBtn = () => {
 
 
     // 数据交互
-
     axios({
         url:'http://localhost:8080/jihe',
         method:'POST',
@@ -246,16 +240,6 @@ let AB = []
     const chart = venn.VennDiagram();
 
     d3.select("#venn").datum(sets).call(chart);
-    // // 添加交互效果：当鼠标悬停时，突出显示当前区域
-    // d3.selectAll("#venn .venn-area")
-    //     .on("mouseover", function(d, i) {
-    //         venn.sortAreas(d3.select("#venn"), d);
-    //         d3.select(this).select("path").transition().attr("transform", `scale(1.1)`);
-    //     })
-    //     .on("mouseout", function(d, i) {
-    //         d3.select(this).select("path").transition().attr("transform", `scale(1)`);
-    //     });
-
     // 默认配置
     d3.selectAll("#venn .venn-area path")
         .style("fill-opacity", 1)  // 设置透明度
@@ -344,6 +328,47 @@ let AB = []
     }();
     })
 }
+
+function openPreview() {
+  if (!previewData.value.formula) {
+    ElMessage.info('请先提交运算以生成预览')
+    return
+  }
+  previewDialogVisible.value = true
+}
+
+// “新建题目”按钮：发送 a,b,c 和公式生成题目
+async function createQuestion() {
+  const A = readSet('.Aenter')
+  const B = readSet('.Benter')
+  const C = readSet('.Center')
+  const formula = document.querySelector('.formula').value.trim()
+  const answer  = document.querySelector('.answer').innerText
+  previewData.value = {
+    sets: { a: A, b: B, c: C },
+    formula,
+    answer
+  }
+  try {
+    const { data: id } = await axios.post('/api/share', {
+      type:    'set',
+      content: JSON.stringify({
+        sets: { a: A, b: B, c: C },
+        formula,
+        answer
+      })
+    })
+    qrUrl.value = `${window.location.origin}/answerSat/${id}`
+    qrDialogVisible.value = true
+    ElMessage.success('题目创建成功！')
+    // 创建成功后直接打开预览弹窗
+    previewDialogVisible.value = true
+  } catch {
+    ElMessage.error('新建题目失败')
+  }
+}
+
+
 </script>
 
 <template>
@@ -363,6 +388,7 @@ let AB = []
             <input type="button" value="-" class="tipbut" @click="tipbtn('-')" data-id="5">
             <input type="text" placeholder='例如：a-b' class="formula">
             <button class="submit" @click="submitBtn">提交</button>
+          <button class="new-question" @click="createQuestion">新建题目</button>
         </div>
 
         </div>
@@ -375,6 +401,19 @@ let AB = []
            
         </div>
         </div>
+
+      <!-- 二维码弹窗 -->
+      <el-dialog
+          v-model="qrDialogVisible"
+          title="题目二维码"
+          width="320px"
+          :close-on-click-modal="false"
+      >
+        <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+          <qrcode-vue :value="qrUrl" :size="256" />
+          <span style="word-break:break-all;text-align:center;">{{ qrUrl }}</span>
+        </div>
+      </el-dialog>
     </div>
     </body>
 </template>
@@ -486,4 +525,8 @@ let AB = []
 body{
     background-color: #ececec42;
 }
+
+.new-question { background-color: #67C23A; color: #fff; border: none; display: flex; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; }
+.new-question:hover { background-color: #5DAE2C; }
+
 </style>

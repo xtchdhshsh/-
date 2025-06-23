@@ -57,7 +57,7 @@ onMounted(() => {
 
     <div class="user" @mouseover="isHovering = true" @mouseleave="isHovering = false">
       <img src="/image/user.png" alt="" class="user-icon">
-      
+
       <!-- 用户名 -->
       <template v-if="isLoggedIn">
         <span class="username">{{ username }}</span>
@@ -73,7 +73,7 @@ onMounted(() => {
       </template>
     </div>
   </div>
-  
+
   <!-- 展示区 -->
   <div class="main">
     <RouterView @login-success="handleLoginSuccess" />
@@ -127,7 +127,7 @@ onMounted(() => {
 }
 .header ul li{
   float: left;
-  width: 1000x;
+  width: auto;
   margin-top: 12px;
   margin-left: 18px;
 }
@@ -144,7 +144,7 @@ onMounted(() => {
   line-height: 67px;
   margin-right: 20px;
 
-} 
+}
 .header .user img{
   height: 30px;
   padding-top: 18px;
@@ -164,7 +164,7 @@ body{
 
 .user {
   display: flex;
-  align-items: top;
+  align-items: start;
   font-weight: 700;
   font-size: 18px;
   color: white;
@@ -204,3 +204,4 @@ body{
   padding-top: 65px;
 }
 </style>
+

@@ -1,12 +1,53 @@
 <script setup>
 import { onMounted, ref } from 'vue';
 import axios from '@/utlis/axios';
+import { ElMessage } from 'element-plus';
+import QrcodeVue from 'qrcode.vue';
 
 const TIME_PERSTEP = 1000; // 每一步的时间
 
 const num = ref(4); // 元素个数
 let n = 0; // num.value
 let inputTable = new Array();
+
+const previewVisible = ref(false);
+const qrVisible = ref(false);
+const qrUrl = ref('');
+const previewData = ref({n:0,src:[],answer:[]});
+
+async function createQuestion() {
+  const matrixStr = getMatrix();
+  if(!matrixStr) return ElMessage.warning('请先填写矩阵');
+
+  try{
+    const { data: resultArr } = await axios.post('/warshall', {
+      num: parseInt(n),
+      stringMatrix: matrixStr
+    });
+    
+    const closure = resultArr[n-1];
+
+    const {data: id} = await axios.post('/api/share', {
+         type: 'warshall',
+         content: JSON.stringify({
+           n:n,
+           matrix: inputTable,
+            pairs: closure,
+         })
+    })
+    if(!id) {
+      ElMessage.error('创建题目失败，请稍后再试');
+      return;
+    }
+    qrUrl.value = `${window.location.origin}/answerWarshall/${id}`;
+    qrVisible.value = true;
+    ElMessage.success('题目创建成功！');
+  }catch(err){
+    console.error(err);
+    ElMessage.error('创建题目失败，请稍后再试');
+    return;
+  }
+}
 
 const createInputMatrix = () => {
     n = num.value;
@@ -30,7 +71,7 @@ const createInputMatrix = () => {
     for (let i = 0; i < n; i++) {
         const row = table.insertRow();
         for (let j = 0; j < n; j++) {
-            const cell = row.insertCell(); 
+            const cell = row.insertCell();
             const input = document.createElement("input");
             input.style.width = `${cellLength}px`;
             input.style.height = `${cellLength}px`;
@@ -90,7 +131,7 @@ function getMatrix() {
 function transformMatrix(data,divName = "") {
     const matrix = document.querySelector(`#${divName}`);
     const span = document.createElement("span");
-    span.innerHTML = `        
+    span.innerHTML = `
         <math class="mathOutput">
             <mrow>
                 <mo>(</mo>
@@ -128,14 +169,14 @@ const compute = (() => {
         widthExpression += transformMatrix(dataGet[n - 1],"outputMatrix");
         // 计算过程
         for (let i = 0; i <= n; i++) {
-            setTimeout(() => {            
+            setTimeout(() => {
                 const matrix = document.querySelector("#stepsArea");
                 const span = document.createElement("span");
                 const comma = document.createElement("span");
-                // A_i = 
+                // A_i =
                 span.innerHTML = `<math class = "mathOutput" :style:"fontSize: {{textSize}} + 'px'><msub><mi>A</mi><mn>${i}</mn></msub><mo>=</mo></math>`;
                 matrix.appendChild(span);
-                
+
                 if(i === 0) {
                     const initialMatrix = inputTable.slice(0, n).map(row => row.slice(0, n));
                     transformMatrix(initialMatrix, "stepsArea");
@@ -154,7 +195,7 @@ const compute = (() => {
                     comma.innerHTML += `<br>`;
                 }
             }, i * TIME_PERSTEP);
-        } 
+        }
     })
 })
 </script>
@@ -169,6 +210,7 @@ const compute = (() => {
                     <label>
                         元素个数：<input id="inputN" v-model="num" @input="createInputMatrix" placeholder="请输入2到12之间的正整数">
                     </label>
+                    <button class="new_question" @click="createQuestion">新建题目</button>
                     <button id="submitBtn" @click="compute">开始运算</button>
                 </div>
                 <div id="inputMatrix">
@@ -194,6 +236,34 @@ const compute = (() => {
             <h2>计算过程</h2>
             <div id="stepsArea"></div>
         </div>
+      <!-- 题目预览弹窗：只展示关系矩阵，学生看不到答案 -->
+      <el-dialog v-model="previewVisible"
+                 title="题目预览"
+                 width="430px"
+                 :close-on-click-modal="false">
+        <template #default>
+          <p><strong>元素个数：</strong>{{ previewData.n }}</p>
+          <table class="preview-matrix">
+            <tr v-for="(row,r) in previewData.src" :key="r">
+              <td v-for="(c,idx) in row" :key="idx">{{ c }}</td>
+            </tr>
+          </table>
+        </template>
+        <template #footer>
+          <el-button type="primary" @click="previewVisible=false">确定</el-button>
+        </template>
+      </el-dialog>
+
+      <!-- 二维码弹窗 -->
+      <el-dialog v-model="qrVisible"
+                 title="题目二维码"
+                 width="320px"
+                 :close-on-click-modal="false">
+        <div class="qr-box">
+          <qrcode-vue :value="qrUrl" :size="256" />
+          <p class="qr-link">{{ qrUrl }}</p>
+        </div>
+      </el-dialog>
     </main>
 </template>
 
@@ -270,6 +340,28 @@ h2 {
 #outputMatrix{
     text-align: center;
     overflow: auto;
+}
+.preview-matrix{
+  border-collapse:collapse;
+  margin:8px 0;
+}
+.preview-matrix td{
+  border:1px solid #666;
+  width:26px;
+  height:26px;
+  text-align:center;
+}
+.qr-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:12px;
+}
+.qr-link{
+  word-break:break-all;
+  font-size:12px;
+  color:#666;
+  text-align:center;
 }
 </style>
 

@@ -1,5 +1,12 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch ,computed} from 'vue'
+import axios         from '@/utlis/axios'
+import { ElMessage } from 'element-plus'
+import QrcodeVue     from 'qrcode.vue'
+
+const createDialogVisible = ref(false)
+const qrDialogVisible     = ref(false)
+const qrUrl               = ref('')
 
 const algorithms = [
   { name: '冒泡排序', value: 'bubble' },
@@ -31,6 +38,9 @@ const swapHistory = ref([])
 
 let sortingGenerator = null    
 const mergeSortInfo = ref([])  // 归并排序文字解释
+
+
+const algoName = computed(()=> algorithms.find(a=>a.value===selectedAlgorithm.value)?.name || selectedAlgorithm.value)
 
 
 // 生成随机数组
@@ -324,6 +334,42 @@ const sortingAlgorithms = {
     comparingIndices.value = []
   }
 }
+
+
+/* 若数组为空则不给出题 */
+function tryOpenCreateDialog () {
+  if (!array.value.length) {
+    ElMessage.info('请先生成数组再出题'); return
+  }
+  createDialogVisible.value = true
+}
+
+/* 把题面打包：你可以按需往里加更多字段 */
+function buildPayload () {
+  return {
+    algo      : selectedAlgorithm.value,
+    initArray : array.value.map(i=>i.value),
+    speed     : sortingSpeed.value,
+    ask       : 'full'
+  }
+}
+
+/* 调后端 /api/share 保存 */
+async function createQuestion () {
+  try {
+    const { data:id } = await axios.post('/api/share', {
+      type   : 'sorting',
+      content: JSON.stringify(buildPayload())
+    })
+    qrUrl.value = `${window.location.origin}/answerSorting/${id}`
+    qrDialogVisible.value   = true
+    createDialogVisible.value = false
+    ElMessage.success('题目创建成功！')
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('题目创建失败')
+  }
+}
 </script>
 
 <template>
@@ -388,6 +434,10 @@ const sortingAlgorithms = {
         <el-button type="info" size="small" @click="resetArray" :disabled="false">重置</el-button>
         <el-button type="success" size="small" @click="pauseSorting" :disabled="!isSorting || isPaused">暂停</el-button>
         <el-button type="success" size="small" @click="resumeSorting" :disabled="!isSorting || !isPaused">继续</el-button>
+         <el-button type="success"  size="small" @click="tryOpenCreateDialog" :disabled="isSorting">
+          新建题目
+        </el-button>
+
       </div>
     </div>
 
@@ -455,6 +505,26 @@ const sortingAlgorithms = {
         </el-table-column>
       </el-table>
     </el-card>
+    <!-- ============ 新建题目确认弹窗 ============ -->
+    <el-dialog v-model="createDialogVisible" title="确认创建题目" width="360" :close-on-click-modal="false">
+      <p style="margin:16px 0;">
+        将以当前数组、算法
+        <strong>{{ algoName }}</strong>
+        创建一道“完整排序”题目，确定吗？
+      </p>
+      <template #footer>
+        <el-button @click="createDialogVisible=false">取消</el-button>
+        <el-button type="primary" @click="createQuestion">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- ============ 二维码弹窗 ============ -->
+    <el-dialog v-model="qrDialogVisible" title="题目二维码" width="320" :close-on-click-modal="false">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+        <qrcode-vue :value="qrUrl" :size="260"/>
+        <p style="word-break:break-all;text-align:center;">{{ qrUrl }}</p>
+      </div>
+    </el-dialog>
   </div>
 </template>
 

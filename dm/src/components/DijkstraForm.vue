@@ -1,9 +1,53 @@
 <script setup>
 import { reactive, ref, onMounted } from 'vue'
 import axios from '@/utlis/axios'
+import { ElMessage } from 'element-plus'
+import QrcodeVue from 'qrcode.vue'
 
+const qrVisible = ref(false)
+const qrUrl     = ref('')
 const emit = defineEmits(["getInputForm", "getResponse"])
 const minCount = 3
+
+
+const rule = reactive({
+  count: [{ required: true }],
+  node: [{ required: true, message: '请输入节点', trigger: 'change' }],
+})
+
+async function createQuestion () {
+  if (!inputForm.count || inputForm.node.length < minCount) {
+    ElMessage.warning('请先完成节点设置')
+    return
+  }
+  if (!inputForm.edges.length) {
+    ElMessage.warning('请至少添加一条边')
+    return
+  }
+  if (!nodeSelected.value) {
+    ElMessage.warning('请选择起点')
+    return
+  }
+  // 题目内容（答案暂无，用 AnswerDijkstra 页面去判）
+  const payload = {
+        count : inputForm.count,
+        node  : inputForm.node,
+        link  : inputForm.edges.map(e => [e.node1, e.node2, e.weight]),
+        start : nodeSelected.value
+  }
+  try {
+    const { data: id } = await axios.post('/api/share', {
+          type   : 'dijkstra',            // ← 分类
+          content: JSON.stringify(payload)
+    })
+    ElMessage.success(`题目已创建`)
+    qrUrl.value  = `${window.location.origin}/answerDijkstra/${id}`
+    qrVisible.value = true
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('创建失败')
+  }
+}
 
 // ======== 表单数据 ========
 const inputForm = reactive({
@@ -268,6 +312,7 @@ onMounted(() => {
       <el-form-item>
         <el-button type="primary" @click="submitForm(ruleForm)">生成</el-button>
         <el-button @click="resetForm(ruleForm)">重置</el-button>
+        <el-button type="success" @click="createQuestion">新建题目</el-button>
       </el-form-item>
 
       <el-form-item>
@@ -281,6 +326,13 @@ onMounted(() => {
         </el-select>
         <el-button @click="searchPath" type="success">查找路径</el-button>
       </el-form-item>
+
+      <el-dialog v-model="qrVisible" title="题目二维码" width="320px" :close-on-click-modal="false">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:12px;">
+            <qrcode-vue :value="qrUrl" :size="260" />
+            <p style="word-break:break-all;text-align:center;">{{ qrUrl }}</p>
+          </div>
+        </el-dialog>
     </div>
   </el-form>
 </template>

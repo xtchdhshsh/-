@@ -64,7 +64,8 @@ const router = createRouter({
         },
         {
             path: '/Sort',
-            component: Sort
+            component: () => import('@/pages/Sort.vue')
+
         },
         {
             path: '/Login',
@@ -121,6 +122,41 @@ const router = createRouter({
             name: 'Answer',
             component: () => import('@/pages/Answer.vue') 
         },
+        {
+            path: '/answerSat/:id',
+            name: 'AnswerSat',
+            component: () => import('@/pages/AnswerSat.vue')
+        },
+        {
+            path: '/answerWarshall/:id',
+            name: 'AnswerWarshall',
+            component: () => import('@/pages/AnswerWarshall.vue')
+        },
+        {
+            path: '/answerDijkstra/:id',
+            name: 'AnswerDijkstra',
+            component: () => import('@/pages/AnswerDijkstra.vue')
+        },
+        {
+            path: '/answerMST/:id',
+            name: 'AnswerMST',
+            component: () => import('@/pages/AnswerMST.vue')
+        },
+        {
+            path: '/answerHuffman/:id',
+            name: 'AnswerHuffman',
+            component: () => import('@/pages/AnswerHuffman.vue')
+        },
+        {
+            path: '/answerBipartite/:id',
+            name: 'AnswerBipartite',
+            component: () => import('@/pages/AnswerBBG.vue')
+        },
+        {
+            path: '/answerSorting/:id',
+            name: 'AnswerSorting',
+            component: () => import('@/pages/AnswerSorting.vue')
+        }
     ]
 })
 

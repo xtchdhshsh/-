@@ -20,14 +20,15 @@
         :header-cell-style="{ textAlign: 'center' }"
       >
         <el-table-column prop="id" label="ID" width="80" align="center" />
+        <el-table-column prop="type1" label="分类" width="80" align="center" />
         <el-table-column label="题型" width="80" align="center">
           <template #default="{ row }">{{
-            row.type === "fill" ? "填空" : "选择"
+            row.type === "choice" ? "选择" : "填空"
           }}</template>
         </el-table-column>
         <el-table-column prop="formula" label="公式 / 说明" />
         <el-table-column
-          prop="createdAt"
+          prop="create_time"
           label="创建时间"
           width="180"
           align="center"
@@ -98,16 +99,26 @@
   async function load() {
     try {
       const { data } = await axios.get("/api/share/list");
+      console.log(data);
   
+      console.log(data[0]);
       list.value = data.map((raw) => {
+        const type1 = raw.type
         const json = JSON.parse(raw.content);
+        const dt = new Date(raw.create_time)
+        const short = dt.toLocaleString('zh-CN', {
+          year:   'numeric',
+          month:  '2-digit',
+          day:    '2-digit',
+          hour:   '2-digit',
+          minute: '2-digit'
+        })
         return {
           id: raw.id,
+          type1: type1,
           type: json.type || "fill",
           formula: json.formula || "—",
-          createdAt: raw.createTime
-            ? new Date(raw.createTime).toLocaleString()
-            : "—",
+          create_time: short
         };
       });
       total.value = list.value.length;
@@ -122,14 +133,50 @@
   const previewVisible = ref(false);
   const previewUrl = ref("");
   function preview(row) {
-    previewUrl.value = `/answer/${row.id}`;
+    if (row.type1 === 'set') {
+      previewUrl.value = `/answerSat/${row.id}`
+    } else if (row.type1 === 'warshall') {
+      previewUrl.value = `/answerWarshall/${row.id}`
+    } else if(row.type1 === '真值表') {
+      previewUrl.value = `/answer/${row.id}`
+    }else if(row.type1 === 'dijkstra') {
+      previewUrl.value = `/answerDijkstra/${row.id}`
+    }else if(row.type1 === 'mst') {
+      previewUrl.value = `/answerMST/${row.id}`
+    } else if(row.type1 === 'huffman') {
+      previewUrl.value = `/answerHuffman/${row.id}`
+    } else  if(row.type1 === 'bipartite') {
+      previewUrl.value = `/answerBipartite/${row.id}`
+    } else if(row.type1 === 'sorting') {
+      previewUrl.value = `/answerSorting/${row.id}`
+    }else {
+      previewUrl.value = `/answer/${row.id}`
+    }
     previewVisible.value = true;
   }
   
   const qrVisible = ref(false);
   const qrLink = ref("");
   function openQr(row) {
-    qrLink.value = `${window.location.origin}/answer/${row.id}`;
+    if (row.type1 === 'set') {
+      qrLink.value = `${window.location.origin}/answerSat/${row.id}`;
+    } else if(row.type1 === 'warshall') {
+      qrLink.value = `${window.location.origin}/answerWarshall/${row.id}`;
+    } else if(row.type1 === '真值表') {
+      qrLink.value = `${window.location.origin}/answer/${row.id}`;
+    }else if(row.type1 === 'dijkstra') {
+      qrLink.value = `${window.location.origin}/answerDijkstra/${row.id}`;
+    }else if(row.type1 === 'mst') {
+      qrLink.value = `${window.location.origin}/answerMST/${row.id}`;
+    }else if(row.type1 === 'huffman') {
+      qrLink.value = `${window.location.origin}/answerHuffman/${row.id}`;
+    } else if(row.type1 === 'bipartite') {
+      qrLink.value = `${window.location.origin}/answerBipartite/${row.id}`;
+    } else if(row.type1 === 'sorting') {
+      qrLink.value = `${window.location.origin}/answerSorting/${row.id}`;
+    } else {
+      qrLink.value = `${window.location.origin}/answer/${row.id}`;
+    }
     qrVisible.value = true;
   }
   

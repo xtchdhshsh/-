@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="comlisanshuxue.lisan.Assignment.Mapper.SharedDataMapper1">
+
+    <resultMap id="sharedDataResultMap" type="comlisanshuxue.lisan.entity.SharedData">
+        <id property="id" column="id"/>
+        <result property="content" column="content"/>
+    </resultMap>
+
+    <select id="findByIds" resultType="comlisanshuxue.lisan.entity.SharedData">
+        SELECT id, content
+        FROM shared_data
+        WHERE id IN
+        <foreach item="id" collection="ids" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+</mapper>
+

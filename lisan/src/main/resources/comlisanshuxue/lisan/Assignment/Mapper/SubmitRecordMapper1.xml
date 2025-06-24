@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="comlisanshuxue.lisan.Assignment.Mapper.SubmitRecordMapper1">
+
+
+    <select id="countSubmittedStudents" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT student_id)
+        FROM submit_record
+        WHERE question_id IN
+        <foreach item="problemId" collection="problemIds" open="(" separator="," close=")">
+            #{problemId}
+        </foreach>
+        AND student_id IN (
+        SELECT studentname FROM class_student WHERE classname = #{classname}
+        )
+    </select>
+
+    <select id="countDistinctStudentsByProblems" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT sr.student_id)
+        FROM submit_record sr
+        INNER JOIN class_student cs ON sr.student_id = cs.studentname
+        WHERE
+        cs.classname = #{classname}
+        <if test="problemIds != null and !problemIds.isEmpty()">
+            AND sr.question_id IN
+            <foreach item="id" collection="problemIds" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="problemIds == null or problemIds.isEmpty()">
+            AND 1=0
+        </if>
+    </select>
+
+    <select id="findLastSubmitsForAssignment" resultType="comlisanshuxue.lisan.entity.SubmitRecord">
+        SELECT student_id as studentId, question_id as questionId, is_correct as isCorrect
+        FROM submit_record
+        WHERE (student_id, question_id,submit_time) IN (
+            SELECT student_id as studentId, question_id as questionId, MAX(submit_time)
+            FROM submit_record
+            WHERE question_id IN
+            <foreach item="problemId" collection="problemIds" open="(" separator="," close=")">
+                #{problemId}
+            </foreach>
+            )
+    </select>
+
+
+</mapper>

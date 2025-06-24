@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="comlisanshuxue.lisan.Assignment.Mapper.AssignmentProblemMapper">
+
+    <insert id="batchInsert">
+        INSERT INTO assignment_problem (assignment_id, problem_id, points) VALUES
+        <foreach item="problem" collection="problems" separator=",">
+            (#{assignmentId}, #{problem.problemId}, #{problem.points})
+        </foreach>
+    </insert>
+
+    <select id="findByAssignmentIds" resultType="comlisanshuxue.lisan.Assignment.entity.AssignmentProblem">
+        SELECT id, assignment_id AS assignmentId, problem_id AS problemId, points
+        FROM assignment_problem
+        <if test="assignmentIds != null and !assignmentIds.isEmpty()">
+            WHERE assignment_id IN
+            <foreach item="id" collection="assignmentIds" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="assignmentIds == null or assignmentIds.isEmpty()">
+            WHERE 1=0
+        </if>
+    </select>
+
+</mapper>

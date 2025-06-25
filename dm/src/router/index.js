@@ -96,8 +96,8 @@ const router = createRouter({
                     component: QuestionBank
                 },
                 {
-                    path: '/Menu/Submission',
-                    component: Submission
+                    path: '/Menu/Homework',
+                    component: Homework
                 },
                 {
                     path: '',
